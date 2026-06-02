@@ -320,5 +320,19 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL3.dll" />
+    <None Include="SDL3\lib\arm64\SDL3.dll" />
+    <None Include="SDL3\lib\arm64\SDL3.pdb" />
+    <None Include="SDL3\lib\x64\SDL3.dll" />
+    <None Include="SDL3\lib\x64\SDL3.pdb" />
+    <None Include="SDL3\lib\x86\SDL3.dll" />
+    <None Include="SDL3\lib\x86\SDL3.pdb" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="SDL3\lib\arm64\SDL3.lib" />
+    <Library Include="SDL3\lib\arm64\SDL3_test.lib" />
+    <Library Include="SDL3\lib\x64\SDL3.lib" />
+    <Library Include="SDL3\lib\x64\SDL3_test.lib" />
+    <Library Include="SDL3\lib\x86\SDL3.lib" />
+    <Library Include="SDL3\lib\x86\SDL3_test.lib" />
   </ItemGroup>
 </Project>
