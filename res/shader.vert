@@ -12,6 +12,8 @@ uniform mat4 viewMat;
 uniform mat4 modelMat;
 
 uniform vec3 camPos;
+uniform vec3 modelPos;
+uniform float modelBoundingSphere;
 
 uniform mat4x3 lights[300];
 uniform int lightCount;
@@ -34,6 +36,13 @@ Light lightFromMat(mat4x3 mat)
 	light.str  = mat[3][0];
 	light.type = int(mat[3][1]);
 	return light;
+}
+
+bool sphereCollision(vec3 aPos, vec3 bPos, float aRad, float bRad)
+{
+	vec3 diff = aPos - bPos;
+	float dist = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+	return (dist < (aRad + bRad) * (aRad + bRad));
 }
 
 void main()
@@ -60,20 +69,41 @@ void main()
 			{
 				float normDiff = max(dot(modelNorm, normalize(light.norm)), 0.0);
 				colorMul += light.rgb * normDiff;
+				break;
 			}
-			break;
 
-			case 3: // Point Light
+		case 3: // Point Light
 			{
-				vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
-				float normDiff = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.0);
+				if (sphereCollision(modelPos, light.pos, modelBoundingSphere, light.str))
+				{
+					vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
+					float normDiff = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.0);
 
-				float dist = length(light.pos - vertPos);
+					float dist = length(light.pos - vertPos);
 
-				float strength = max(light.str - dist, 0.0) / light.str;
-				colorMul += light.rgb * normDiff * strength;
+					float strength = max(light.str - dist, 0.0) / light.str;
+					colorMul += light.rgb * normDiff * strength;
+				}
+				break;
 			}
-			break;
+
+		case 4: // Directional point light
+			{
+				if (sphereCollision(modelPos, light.pos, modelBoundingSphere, light.str))
+				{
+					vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
+					float normDiffDir = max(dot(modelNorm, normalize(light.norm)), 0.0);
+					float normDiffPt = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.0);
+
+					float lookDir = max(dot(normalize(light.pos - vertPos), normalize(light.norm)), 0.0);
+
+					float dist = length(light.pos - vertPos);
+
+					float strength = max(light.str - dist, 0.0) / light.str;
+					colorMul += light.rgb * normDiffDir * normDiffPt * lookDir * strength;
+				}
+				break;
+			}
 		}
 
 	}

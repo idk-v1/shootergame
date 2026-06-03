@@ -29,6 +29,7 @@ namespace GLH
 	{
 		GLuint vao, vbo;
 		size_t size;
+		float boundingRad;
 	};
 	OGL_Model loadModel(const std::string& name, float scale = 1.f);
 	OGL_Model loadModel(Vertex* verts, size_t length);
@@ -108,15 +109,18 @@ namespace GLH
 		Vec3f norm;
 		float str;
 		float type; // easier if its a float, treat like int
+		float dummy;
 	};
 	int addLight(const Light& light);
 	int addAmbientLight(Vec3f rgb);
 	int addDirectionalLight(Vec3f rgb, Vec3f normal);
 	int addPointLight(Vec3f rgb, Vec3f pos, float strength);
+	int addDirectionalPointLight(Vec3f rgb, Vec3f pos, Vec3f normal, float strength);
 	void setLight(const Light& light, int index);
 	void removeLight(int index);
 	extern int lightCount;
 	extern bool lightStates[];
+	extern Light lights[300];
 
 	void updateCamera(GLuint shader, Vec3f pos, Vec3f rot, float fov);
 }

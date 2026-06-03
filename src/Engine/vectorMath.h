@@ -91,6 +91,11 @@ namespace GLH
 			return *this / dist;
 		}
 
+		float length()
+		{
+			return fastSqrt(x * x + y * y + z * z);
+		}
+
 		Vec3f cross(const Vec3f& right)
 		{
 			Vec3f vec = { 0 };

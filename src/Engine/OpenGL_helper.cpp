@@ -130,6 +130,13 @@ GLH::OGL_Model GLH::loadModel(Vertex* verts, size_t length)
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vec3f)+sizeof(Vec2f)));
 	glEnableVertexAttribArray(2);
 
+	for (size_t i = 0; i < length; ++i)
+	{
+		float vecLen = verts[i].pos.length();
+		if (model.boundingRad < vecLen)
+			model.boundingRad = vecLen;
+	}
+
 	return model;
 }
 
@@ -211,6 +218,10 @@ void GLH::drawModel(const OGL_Model& model,
 
 	setUniformMat4(activeShader, "modelMat", mat);
 	glBindVertexArray(model.vao);
+
+	setUniformVec3(activeShader, "modelPos", pos);
+	setUniformFloat(activeShader, "modelBoundingSphere", model.boundingRad);
+
 	glDrawArrays(GL_TRIANGLES, 0, model.size);
 }
 
@@ -319,22 +330,34 @@ void GLH::setUniformMat4(GLuint shader, const char* name, const Matrix4& value)
 	glUniformMatrix4fv(glGetUniformLocation(shader, name), 1, false, value.m);
 }
 
-int GLH::lightCount = 0;
+int GLH::lightCount = 0; // count of light storage in use, not actual count
 bool GLH::lightStates[300] = { 0 };
+extern GLH::Light GLH::lights[300] = { 0 };
+
 
 int GLH::addLight(const Light& light)
 {
-	for (int i = 0; i < 300; ++i)
+	if (lightCount < 300)
 	{
-		if (!lightStates[i])
+		for (int i = 0; i < lightCount; ++i)
 		{
-			lightStates[i] = true;
-			++lightCount;
-			std::string name = "lights[" + std::to_string(i) + "]";
-			setUniformInt(activeShader, "lightCount", lightCount);
-			glUniformMatrix4x3fv(glGetUniformLocation(activeShader, name.data()), 1, false, (float*)&light);
-			return i;
+			if (!lightStates[i])
+			{
+				lightStates[i] = true;
+				lights[i] = light;
+				std::string name = "lights[" + std::to_string(i) + "]";
+				glUniformMatrix4x3fv(glGetUniformLocation(activeShader, name.data()), 1, false, (float*)&light);
+				return i;
+			}
 		}
+
+		lightStates[lightCount] = true;
+		lights[lightCount] = light;
+		std::string name = "lights[" + std::to_string(lightCount) + "]";
+		glUniformMatrix4x3fv(glGetUniformLocation(activeShader, name.data()), 1, false, (float*)&light);
+		++lightCount;
+		setUniformInt(activeShader, "lightCount", lightCount);
+		return lightCount - 1;
 	}
 
 	return -1;
@@ -367,15 +390,37 @@ int GLH::addPointLight(Vec3f rgb, Vec3f pos, float strength)
 	return addLight(light);
 }
 
+int GLH::addDirectionalPointLight(Vec3f rgb, Vec3f pos, Vec3f normal, float strength)
+{
+	Light light = { 0 };
+	light.rgb = rgb;
+	light.pos = pos;
+	light.norm = normal;
+	light.str = strength;
+	light.type = 4.f;
+	return addLight(light);
+}
+
 void GLH::setLight(const Light& light, int index)
 {
-	lightStates[index] = true;
-	// set uniform
+	if (index >= 0 && index < 300)
+	{
+		lightStates[index] = true;
+		lights[index] = light;
+		std::string name = "lights[" + std::to_string(index) + "]";
+		glUniformMatrix4x3fv(glGetUniformLocation(activeShader, name.data()), 1, false, (float*)&light);
+	}
 }
 
 void GLH::removeLight(int index)
 {
-	lightStates[index] = false;
+	if (index >= 0 && index < 300)
+	{
+		lightStates[index] = false;
+		std::string name = "lights[" + std::to_string(index) + "]";
+		lights[index].type = 0;
+		glUniformMatrix4x3fv(glGetUniformLocation(activeShader, name.data()), 1, false, (float*)&lights[index]);
+	}
 }
 
 
