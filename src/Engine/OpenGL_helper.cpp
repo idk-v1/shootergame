@@ -149,6 +149,14 @@ void GLH::unloadModel(OGL_Model& model)
 	model.vbo = 0;
 }
 
+
+bool sphereCollision(GLH::Vec3f aPos, GLH::Vec3f bPos, float aRad, float bRad)
+{
+	GLH::Vec3f diff = aPos - bPos;
+	float dist = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+	return (dist < (aRad + bRad) * (aRad + bRad));
+}
+
 void GLH::drawModel(const OGL_Model& model, 
 	const Vec3f& pos, const Vec3f& rot, const Vec3f& scale)
 {
@@ -219,10 +227,29 @@ void GLH::drawModel(const OGL_Model& model,
 	setUniformMat4(activeShader, "modelMat", mat);
 	glBindVertexArray(model.vao);
 
-	setUniformVec3(activeShader, "modelPos", pos);
-	setUniformFloat(activeShader, "modelBoundingSphere", model.boundingRad);
+
+	for (int i = 0; i < lightCount; ++i)
+	{
+		if (lights[i].type == 3 || lights[i].type == 4)
+		{
+			if (!sphereCollision(pos, lights[i].pos, model.boundingRad, lights[i].str))
+			{
+				lights[i].type += 10;
+			}
+		}
+	}
+
+	glUniformMatrix4x3fv(glGetUniformLocation(activeShader, "lights"), lightCount, false, (float*)lights);
 
 	glDrawArrays(GL_TRIANGLES, 0, model.size);
+
+	for (int i = 0; i < lightCount; ++i)
+	{
+		if (lights[i].type >= 10)
+			lights[i].type -= 10;
+	}
+
+	glUniformMatrix4x3fv(glGetUniformLocation(activeShader, "lights"), lightCount, false, (float*)lights);
 }
 
 

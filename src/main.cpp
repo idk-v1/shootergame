@@ -50,9 +50,9 @@ int main()
 
 	//GLH::addAmbientLight(GLH::Vec3f(0.1f, 0.1f, 0.1f));
 	for (int i = 0; i < 100; ++i)
-		GLH::addPointLight(GLH::Vec3f(1.0f, 0.f, 0.f), GLH::Vec3f(sinf(i / 100.f * 2.f * 3.1415f) * 50.f, 10.f, cosf(i / 100.f * 2 * 3.1415f) * 50.f), 20.f);
+		GLH::addPointLight(GLH::Vec3f(1.0f, 0.7f, 0.f), GLH::Vec3f(sinf(i / 100.f * 2.f * 3.1415f) * 50.f, 10.f, cosf(i / 100.f * 2 * 3.1415f) * 50.f), 20.f);
 	//GLH::addPointLight(GLH::Vec3f(0.0f, 0.7f, 1.0f), GLH::Vec3f(10.f, 10.f, 0.f), 100.f);
-	GLH::addDirectionalPointLight(GLH::Vec3f(1.0f, 1.0f, 0.0f), GLH::Vec3f(0.f, 5.f, 10.f), GLH::Vec3f(1.f, 0.f, 0.f).normalize(), 500.f);
+	GLH::addDirectionalPointLight(GLH::Vec3f(1.0f, 1.0f, 1.0f), GLH::Vec3f(0.f, 5.f, 10.f), GLH::Vec3f(1.f, 0.f, 0.f).normalize(), 500.f);
 
 	bool running = true;
 	while (running)
@@ -90,13 +90,18 @@ int main()
 		GLH::useShader(shader);
 
 		int gridSize = 10;
-		//GLH::useTexture(carnoTex);
-		//for (int x = -gridSize; x < gridSize; ++x)
-		//	for (int z = -gridSize + 0; z < gridSize; z += 1)
-		//		GLH::drawModel(carnoModel,
-		//			GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-		//			GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, 0.f),
-		//			GLH::Vec3f(1.f, 1.f, 1.f));
+		size_t triCount = 0;
+
+		GLH::useTexture(carnoTex);
+		for (int x = -gridSize; x < gridSize; ++x)
+			for (int z = -gridSize + 0; z < gridSize; z += 1)
+			{
+				GLH::drawModel(carnoModel,
+					GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
+					GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, 0.f),
+					GLH::Vec3f(1.f, 1.f, 1.f));
+				triCount += carnoModel.size;
+			}
 
 		//GLH::useTexture(pterTex);
 		//for (int x = -gridSize; x < gridSize; ++x)
@@ -114,13 +119,13 @@ int main()
 		//			GLH::Vec3f(0.f, ((x + z) * 10.f + lastTime / 10.f), 0.f),
 		//			GLH::Vec3f(1.f, 1.f, 1.f));
 
-		GLH::useTexture(rhampTex);
-		for (int x = -gridSize; x < gridSize; ++x)
-			for (int z = -gridSize + 0; z < gridSize; z += 1)
-				GLH::drawModel(rhampModel,
-					GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-					GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, ((x + z) * 10.f + lastTime / 10.f)),
-					GLH::Vec3f(1.f, 1.f, 1.f));
+		//GLH::useTexture(rhampTex);
+		//for (int x = -gridSize; x < gridSize; ++x)
+		//	for (int z = -gridSize + 0; z < gridSize; z += 1)
+		//		GLH::drawModel(rhampModel,
+		//			GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
+		//			GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, ((x + z) * 10.f + lastTime / 10.f)),
+		//			GLH::Vec3f(1.f, 1.f, 1.f));
 
 		SDL_GL_SwapWindow(window);
 		++fpsCount;
@@ -129,7 +134,7 @@ int main()
 		{
 			lastFPSTime = nowTime;
 			SDL_SetWindowTitle(window, ("FPS: " + std::to_string(fpsCount * 4) + " | " + 
-				std::to_string(player.pos.x) + " " + std::to_string(player.pos.y) + " " + std::to_string(player.pos.z)).data());
+				std::to_string(triCount)).data());
 			fpsCount = 0;
 		}
 		lastTime = nowTime;
