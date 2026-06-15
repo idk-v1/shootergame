@@ -92,16 +92,16 @@ int main()
 		int gridSize = 10;
 		size_t triCount = 0;
 
-		GLH::useTexture(carnoTex);
-		for (int x = -gridSize; x < gridSize; ++x)
-			for (int z = -gridSize + 0; z < gridSize; z += 1)
-			{
-				GLH::drawModel(carnoModel,
-					GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-					GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, 0.f),
-					GLH::Vec3f(1.f, 1.f, 1.f));
-				triCount += carnoModel.size;
-			}
+		//GLH::useTexture(carnoTex);
+		//for (int x = -gridSize; x < gridSize; ++x)
+		//	for (int z = -gridSize + 0; z < gridSize; z += 1)
+		//	{
+		//		GLH::drawModel(carnoModel,
+		//			GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
+		//			GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, 0.f),
+		//			GLH::Vec3f(1.f, 1.f, 1.f));
+		//		triCount += carnoModel.size / 3;
+		//	}
 
 		//GLH::useTexture(pterTex);
 		//for (int x = -gridSize; x < gridSize; ++x)
@@ -119,13 +119,16 @@ int main()
 		//			GLH::Vec3f(0.f, ((x + z) * 10.f + lastTime / 10.f), 0.f),
 		//			GLH::Vec3f(1.f, 1.f, 1.f));
 
-		//GLH::useTexture(rhampTex);
-		//for (int x = -gridSize; x < gridSize; ++x)
-		//	for (int z = -gridSize + 0; z < gridSize; z += 1)
-		//		GLH::drawModel(rhampModel,
-		//			GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-		//			GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, ((x + z) * 10.f + lastTime / 10.f)),
-		//			GLH::Vec3f(1.f, 1.f, 1.f));
+		GLH::useTexture(rhampTex);
+		for (int x = -gridSize; x < gridSize; ++x)
+			for (int z = -gridSize + 0; z < gridSize; z += 1)
+			{
+				GLH::drawModel(rhampModel,
+					GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
+					GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, ((x + z) * 10.f + lastTime / 10.f)),
+					GLH::Vec3f(1.f, 1.f, 1.f));
+				triCount += rhampModel.size / 3;
+			}
 
 		SDL_GL_SwapWindow(window);
 		++fpsCount;

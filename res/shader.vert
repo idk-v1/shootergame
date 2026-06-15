@@ -14,6 +14,7 @@ uniform mat4 modelMat;
 uniform vec3 camPos;
 
 uniform mat4x3 lights[300];
+uniform int lightStates[10]; // ceil(300 / 32)
 uniform int lightCount;
 
 struct Light
@@ -43,52 +44,62 @@ void main()
 
 	vec3 modelNorm = normalize(mat3(transpose(inverse(modelMat))) * norm);
 
-	colorMul = vec3(0.0, 0.0, 0.0);
+	vec3 colorMulTemp = vec3(0.0, 0.0, 0.0);
 	for (int i = 0; i < lightCount; ++i)
 	{
-		Light light = lightFromMat(lights[i]);
-
-		switch (light.type)
+		if ((lightStates[i >> 5] & (1 << (i & 31))) != 0)
 		{
-		case 0: // Disabled
-			break;
-		case 1: // Ambient Light
-			colorMul += light.rgb;
-			break;
+			Light light = lightFromMat(lights[i]);
 
-		case 2: // Directional Light
+			switch (light.type)
 			{
-				float normDiff = max(dot(modelNorm, normalize(light.norm)), 0.0);
-				colorMul += light.rgb * normDiff;
-				break;
+			case 0: // Disabled
+				{
+					break;
+				}
+			case 1: // Ambient Light
+				{
+					colorMulTemp += light.rgb;
+					break;
+				}
+
+			case 2: // Directional Light
+				{
+					float normDiff = max(dot(modelNorm, normalize(light.norm)), 0.0);
+					colorMulTemp += light.rgb * normDiff;
+					break;
+				}
+
+			case 3: // Point Light
+				{
+					vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
+					float normDiff = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.0);
+
+					float dist = length(light.pos - vertPos);
+
+					float strength = max(light.str - dist, 0.0) / light.str;
+					colorMulTemp += light.rgb * normDiff * strength;
+					break;
+				}
+
+			case 4: // Directional point light
+				{
+					vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
+					float normDiffDir = max(dot(modelNorm, normalize(light.norm)), 0.0);
+					float normDiffPt = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.0);
+
+					float lookDir = max(dot(normalize(light.pos - vertPos), normalize(light.norm)), 0.0);
+
+					float dist = length(light.pos - vertPos);
+					float strength = max(light.str - dist, 0.0) / light.str;
+					colorMulTemp += light.rgb * normDiffDir * normDiffPt * lookDir * strength;
+					break;
+				}
 			}
 
-		case 3: // Point Light
-			{
-				vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
-				float normDiff = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.0);
-
-				float dist = length(light.pos - vertPos);
-
-				float strength = max(light.str - dist, 0.0) / light.str;
-				colorMul += light.rgb * normDiff * strength;
-				break;
-			}
-
-		case 4: // Directional point light
-			{
-				vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
-				float normDiffDir = max(dot(modelNorm, normalize(light.norm)), 0.0);
-				float normDiffPt = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.0);
-
-				float lookDir = max(dot(normalize(light.pos - vertPos), normalize(light.norm)), 0.0);
-
-				float dist = length(light.pos - vertPos);
-				float strength = max(light.str - dist, 0.0) / light.str;
-				colorMul += light.rgb * normDiffDir * normDiffPt * lookDir * strength;
-				break;
-			}
 		}
 
 	}
+
+	colorMul = colorMulTemp;
 }

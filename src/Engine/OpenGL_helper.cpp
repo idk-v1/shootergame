@@ -228,28 +228,23 @@ void GLH::drawModel(const OGL_Model& model,
 	glBindVertexArray(model.vao);
 
 
+	static int lightStates[10]; // ceil(300 / 32)
+	memset(lightStates, 0, sizeof(lightStates));
 	for (int i = 0; i < lightCount; ++i)
 	{
 		if (lights[i].type == 3 || lights[i].type == 4)
 		{
-			if (!sphereCollision(pos, lights[i].pos, model.boundingRad, lights[i].str))
-			{
-				lights[i].type += 10;
-			}
+			if (sphereCollision(pos, lights[i].pos, model.boundingRad, lights[i].str))
+				lightStates[i >> 5] |= 1 << (i & 31);
 		}
+		else if (lights[i].type == 0);
+		else
+			lightStates[i >> 5] |= 1 << (i & 31);
 	}
 
-	glUniformMatrix4x3fv(glGetUniformLocation(activeShader, "lights"), lightCount, false, (float*)lights);
+	glUniform1iv(glGetUniformLocation(activeShader, "lightStates"), 10, lightStates);
 
 	glDrawArrays(GL_TRIANGLES, 0, model.size);
-
-	for (int i = 0; i < lightCount; ++i)
-	{
-		if (lights[i].type >= 10)
-			lights[i].type -= 10;
-	}
-
-	glUniformMatrix4x3fv(glGetUniformLocation(activeShader, "lights"), lightCount, false, (float*)lights);
 }
 
 
