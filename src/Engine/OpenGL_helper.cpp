@@ -228,13 +228,13 @@ void GLH::drawModel(const OGL_Model& model,
 	glBindVertexArray(model.vao);
 
 
-	static int lightStates[10]; // ceil(300 / 32)
-	memset(lightStates, 0, sizeof(lightStates));
+	int lightStates[10] = { 0 }; // ceil(300 / 32) = 10
 	for (int i = 0; i < lightCount; ++i)
 	{
 		if (lights[i].type == 3 || lights[i].type == 4)
 		{
-			if (sphereCollision(pos, lights[i].pos, model.boundingRad, lights[i].str))
+			float maxScale = fmaxf(sx, fmaxf(sy, sz));
+			if (sphereCollision(pos, lights[i].pos, model.boundingRad * maxScale, lights[i].str))
 				lightStates[i >> 5] |= 1 << (i & 31);
 		}
 		else if (lights[i].type == 0);
@@ -353,13 +353,13 @@ void GLH::setUniformMat4(GLuint shader, const char* name, const Matrix4& value)
 }
 
 int GLH::lightCount = 0; // count of light storage in use, not actual count
-bool GLH::lightStates[300] = { 0 };
-extern GLH::Light GLH::lights[300] = { 0 };
+bool GLH::lightStates[150] = { 0 };
+extern GLH::Light GLH::lights[150] = { 0 };
 
 
 int GLH::addLight(const Light& light)
 {
-	if (lightCount < 300)
+	if (lightCount < 150)
 	{
 		for (int i = 0; i < lightCount; ++i)
 		{

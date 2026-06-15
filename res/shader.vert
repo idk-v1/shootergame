@@ -13,8 +13,8 @@ uniform mat4 modelMat;
 
 uniform vec3 camPos;
 
-uniform mat4x3 lights[300];
-uniform int lightStates[10]; // ceil(300 / 32)
+uniform mat4x3 lights[150];
+uniform int lightStates[10]; // ceil(300 / 32) = 10
 uniform int lightCount;
 
 struct Light
@@ -43,6 +43,7 @@ void main()
 	texCoord = tex;
 
 	vec3 modelNorm = normalize(mat3(transpose(inverse(modelMat))) * norm);
+	vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
 
 	vec3 colorMulTemp = vec3(0.0, 0.0, 0.0);
 	for (int i = 0; i < lightCount; ++i)
@@ -72,7 +73,6 @@ void main()
 
 			case 3: // Point Light
 				{
-					vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
 					float normDiff = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.0);
 
 					float dist = length(light.pos - vertPos);
@@ -84,7 +84,6 @@ void main()
 
 			case 4: // Directional point light
 				{
-					vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
 					float normDiffDir = max(dot(modelNorm, normalize(light.norm)), 0.0);
 					float normDiffPt = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.0);
 
