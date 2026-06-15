@@ -120,7 +120,7 @@ namespace GLH
 	void removeLight(int index);
 	extern int lightCount;
 	extern bool lightStates[];
-	extern Light lights[300];
+	extern Light lights[];
 
 	void updateCamera(GLuint shader, Vec3f pos, Vec3f rot, float fov);
 }

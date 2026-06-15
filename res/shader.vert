@@ -13,8 +13,8 @@ uniform mat4 modelMat;
 
 uniform vec3 camPos;
 
-uniform mat4x3 lights[300];
-uniform int lightStates[10]; // ceil(300 / 32)
+uniform mat4x3 lights[150];
+uniform int lightStates[10]; // ceil(300 / 32) = 10
 uniform int lightCount;
 
 struct Light
@@ -39,12 +39,19 @@ Light lightFromMat(mat4x3 mat)
 
 void main()
 {
-	gl_Position = projMat * viewMat * modelMat * vec4(pos, 1.0);
+	gl_Position = projMat * viewMat * modelMat * vec4(pos, 1.f);
 	texCoord = tex;
 
-	vec3 modelNorm = normalize(mat3(transpose(inverse(modelMat))) * norm);
+	if (gl_Position.w < 0.f)
+	{
+		colorMul = vec3(0.f, 0.f, 0.f);
+		return;
+	}
 
-	vec3 colorMulTemp = vec3(0.0, 0.0, 0.0);
+	vec3 modelNorm = normalize(mat3(transpose(inverse(modelMat))) * norm);
+	vec3 vertPos = (modelMat * vec4(pos, 1.f)).xyz;
+
+	vec3 colorMulTemp = vec3(0.f, 0.f, 0.f);
 	for (int i = 0; i < lightCount; ++i)
 	{
 		if ((lightStates[i >> 5] & (1 << (i & 31))) != 0)
@@ -65,33 +72,31 @@ void main()
 
 			case 2: // Directional Light
 				{
-					float normDiff = max(dot(modelNorm, normalize(light.norm)), 0.0);
+					float normDiff = max(dot(modelNorm, normalize(light.norm)), 0.f);
 					colorMulTemp += light.rgb * normDiff;
 					break;
 				}
 
 			case 3: // Point Light
 				{
-					vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
-					float normDiff = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.0);
+					float normDiff = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.f);
 
 					float dist = length(light.pos - vertPos);
 
-					float strength = max(light.str - dist, 0.0) / light.str;
+					float strength = max(light.str - dist, 0.f) / light.str;
 					colorMulTemp += light.rgb * normDiff * strength;
 					break;
 				}
 
 			case 4: // Directional point light
 				{
-					vec3 vertPos = (modelMat * vec4(pos, 1.0)).xyz;
-					float normDiffDir = max(dot(modelNorm, normalize(light.norm)), 0.0);
-					float normDiffPt = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.0);
+					float normDiffDir = max(dot(modelNorm, normalize(light.norm)), 0.f);
+					float normDiffPt = max(dot(modelNorm, normalize(light.pos - vertPos)), 0.f);
 
-					float lookDir = max(dot(normalize(light.pos - vertPos), normalize(light.norm)), 0.0);
+					float lookDir = max(dot(normalize(light.pos - vertPos), normalize(light.norm)), 0.f);
 
 					float dist = length(light.pos - vertPos);
-					float strength = max(light.str - dist, 0.0) / light.str;
+					float strength = max(light.str - dist, 0.f) / light.str;
 					colorMulTemp += light.rgb * normDiffDir * normDiffPt * lookDir * strength;
 					break;
 				}
