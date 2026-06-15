@@ -17,5 +17,5 @@ void main()
 	//if (off.y > 0.0025) off.y = 0.005 - off.y;
 	//if (off.y <-0.0025) off.y = 0.005 + off.y;
 
-	FragColor = texture(tex, texCoord) * vec4(colorMul, 1.0);
+	FragColor = texture(tex, texCoord) * vec4(colorMul, 1.f);
 }
