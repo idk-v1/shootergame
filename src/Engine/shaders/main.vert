@@ -12,6 +12,7 @@ uniform mat4 viewMat;
 uniform mat4 modelMat;
 
 uniform vec3 camPos;
+uniform vec3 camRot;
 
 uniform mat4x3 lights[150];
 uniform int lightStates[10]; // ceil(300 / 32) = 10

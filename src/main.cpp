@@ -153,15 +153,16 @@ int main()
 		//	}
 
 		GLH::useTexture(pterTex);
-		for (int x = -gridSize; x < gridSize; x += 2)
-			for (int z = -gridSize; z < gridSize; z += 1)
-			{
-				GLH::drawModel(pterModel,
-					GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-					GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, 0.f),
-					GLH::Vec3f(1.f, 1.f, 1.f));
-					triCount += pterModel.size / 3;
-			}
+		for (int x = -gridSize; x < gridSize; x += 6)
+			for (int y = -gridSize; y < gridSize; y += 4)
+				for (int z = -gridSize; z < gridSize; z += 4)
+				{
+					GLH::drawModel(pterModel,
+						GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
+						GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks)),
+						GLH::Vec3f(1.f, 1.f, 1.f));
+						triCount += pterModel.size / 3;
+				}
 
 		//GLH::useTexture(ankyTex);
 		//for (int x = -gridSize; x < gridSize; ++x)

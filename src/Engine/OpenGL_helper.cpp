@@ -504,6 +504,7 @@ void GLH::updateCamera(Vec3f pos, Vec3f rot, float fov)
 	viewMat(3, 3) =  1.f;
 
 	setUniformVec3(activeShader, "camPos", pos);
+	setUniformVec3(activeShader, "camRot", dir);
 	setUniformMat4(activeShader, "projMat", projMat);
 	setUniformMat4(activeShader, "viewMat", viewMat);
 }
