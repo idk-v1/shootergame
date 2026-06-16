@@ -12,6 +12,7 @@ namespace GLH
 		Vec3f pos;
 		Vec3f vel;
 		Vec3f rot;
+		Vec3f rotVel;
 		float moveSpeed;
 
 		Entity() {}

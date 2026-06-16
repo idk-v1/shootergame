@@ -44,14 +44,15 @@ int main()
 	//GLH::OGL_Model sphere = GLH::loadModel("res/sphere.obj", 1.f / 0.695000827f * rhampModel.boundingRad);
 	//GLH::loadNoTexture();
 
-	GLH::Entity player(GLH::Vec3f(0.f, 0.f, 0.f), GLH::Vec3f(0.f, 0.f, 0.f), 0.01f);
-	float lookSpeed = 2.f;
+	GLH::Entity player(GLH::Vec3f(0.f, 0.f, 0.f), GLH::Vec3f(0.f, 0.f, 0.f), 0.02f);
+	float lookSpeed = 0.1f;
 	float fov = 90.f;
 
 	Uint64 lastTime = SDL_GetTicks();
 	Uint64 deltaTime = 0;
 	Uint64 lastFPSTime = lastTime;
 	Uint64 fpsCount = 0;
+	Uint64 ticks = 0;
 
 	GLH::useShader(shader);
 
@@ -60,6 +61,10 @@ int main()
 
 
 	bool running = true;
+	bool paused = false;
+	bool escLast = false;
+	bool focused = true;
+
 	while (running)
 	{
 		SDL_Event event;
@@ -74,8 +79,39 @@ int main()
 			case SDL_EVENT_WINDOW_RESIZED:
 				GLH::setViewSize(event.window.data1, event.window.data2);
 				break;
+
+			case SDL_EVENT_WINDOW_FOCUS_LOST:
+				if (!paused)
+				{
+					paused = true;
+
+					SDL_SetWindowRelativeMouseMode(window, false);
+					int w = 0, h = 0;
+					SDL_GetWindowSize(window, &w, &h);
+					SDL_WarpMouseInWindow(window, w / 2.f, h / 2.f);
+					SDL_GetRelativeMouseState(NULL, NULL);
+					focused = false;
+				}
+				break;
+			case SDL_EVENT_WINDOW_FOCUS_GAINED:
+				focused = true;
+				break;
 			}
 		}
+
+		const bool* keys = SDL_GetKeyboardState(NULL);
+		bool esc = keys[SDL_SCANCODE_ESCAPE];
+		if (esc && !escLast && focused)
+		{
+			paused = !paused;
+
+			SDL_SetWindowRelativeMouseMode(window, !paused);
+			int w = 0, h = 0;
+			SDL_GetWindowSize(window, &w, &h);
+			SDL_WarpMouseInWindow(window, w / 2.f, h / 2.f);
+			SDL_GetRelativeMouseState(NULL, NULL);
+		}
+		escLast = esc;
 
 		Uint64 nowTime = SDL_GetTicks();
 		deltaTime += nowTime - lastTime;
@@ -83,10 +119,12 @@ int main()
 		{
 			deltaTime -= 1000 / 30;
 
-			playerController(player, lookSpeed, fov);
-			player.updatePhysics(1.1f);
-
-			GLH::setUniformFloat(shader, "time", (float)(lastTime / 100.f));
+			if (!paused)
+			{
+				++ticks;
+				playerController(player, lookSpeed, fov, window);
+				player.updatePhysics(1.1f);
+			}
 		}
 
 		GLH::clear(250, 0, 0);
@@ -115,13 +153,13 @@ int main()
 		//	}
 
 		GLH::useTexture(pterTex);
-		for (int x = -gridSize; x < gridSize; x += 3)
-			for (int z = -gridSize; z < gridSize; z += 2)
+		for (int x = -gridSize; x < gridSize; x += 2)
+			for (int z = -gridSize; z < gridSize; z += 1)
 			{
 				GLH::drawModel(pterModel,
 					GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-					GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, 0.f),
-					GLH::Vec3f(2.f, 2.f, 2.f));
+					GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, 0.f),
+					GLH::Vec3f(1.f, 1.f, 1.f));
 					triCount += pterModel.size / 3;
 			}
 
