@@ -23,6 +23,7 @@ struct Light
 	vec3  pos;
 	vec3  norm;
 	float str;
+	float spread;
 	int type;
 };
 
@@ -34,6 +35,7 @@ Light lightFromMat(mat4x3 mat)
 	light.norm = mat[2];
 	light.str  = mat[3][0];
 	light.type = int(mat[3][1]);
+	light.spread = mat[3][2];
 	return light;
 }
 
@@ -73,7 +75,7 @@ void main()
 			case 2: // Directional Light
 				{
 					float normDiff = max(dot(modelNorm, normalize(light.norm)), 0.f);
-					colorMulTemp += light.rgb * normDiff;
+					colorMulTemp += light.rgb * pow(normDiff, light.spread);
 					break;
 				}
 
@@ -97,7 +99,7 @@ void main()
 
 					float dist = length(light.pos - vertPos);
 					float strength = max(light.str - dist, 0.f) / light.str;
-					colorMulTemp += light.rgb * normDiffDir * normDiffPt * lookDir * strength;
+					colorMulTemp += light.rgb * pow(normDiffDir, light.spread) * normDiffPt * lookDir * strength;
 					break;
 				}
 			}

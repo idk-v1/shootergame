@@ -26,7 +26,11 @@ int main()
 	glFrontFace(GL_CCW);
 	glEnable(GL_DEPTH_TEST);
 
-	GLuint shader = GLH::loadShader("res/shader.vert", "res/shader.frag");
+	GLuint shader = GLH::loadShader("src/Engine/shaders/main.vert", "src/Engine/shaders/main.frag");
+	GLuint skyboxShader = GLH::loadShader("src/Engine/shaders/skybox.vert", "src/Engine/shaders/skybox.frag");
+
+	GLuint skybox = GLH::loadSkybox("res/skybox.png");
+	GLH::loadCubeModel();
 
 	GLH::OGL_Model carnoModel = GLH::loadModel("res/carno.obj", 0.02f);
 	GLuint carnoTex = GLH::loadTexture("res/carno.png");
@@ -36,6 +40,9 @@ int main()
 	GLuint ankyTex = GLH::loadTexture("res/anky.png");
 	GLH::OGL_Model rhampModel = GLH::loadModel("res/rhamp.obj", 1.f);
 	GLuint rhampTex = GLH::loadTexture("res/rhamp.png");
+
+	//GLH::OGL_Model sphere = GLH::loadModel("res/sphere.obj", 1.f / 0.695000827f * rhampModel.boundingRad);
+	//GLH::loadNoTexture();
 
 	GLH::Entity player(GLH::Vec3f(0.f, 0.f, 0.f), GLH::Vec3f(0.f, 0.f, 0.f), 0.01f);
 	float lookSpeed = 2.f;
@@ -48,11 +55,9 @@ int main()
 
 	GLH::useShader(shader);
 
-	//GLH::addAmbientLight(GLH::Vec3f(0.1f, 0.1f, 0.1f));
-	for (int i = 0; i < 100; ++i)
-		GLH::addPointLight(GLH::Vec3f(1.0f, 0.7f, 0.f), GLH::Vec3f(sinf(i / 100.f * 2.f * 3.1415f) * 50.f, 10.f, cosf(i / 100.f * 2 * 3.1415f) * 50.f), 20.f);
-	//GLH::addPointLight(GLH::Vec3f(0.0f, 0.7f, 1.0f), GLH::Vec3f(10.f, 10.f, 0.f), 100.f);
-	GLH::addDirectionalPointLight(GLH::Vec3f(1.0f, 1.0f, 1.0f), GLH::Vec3f(0.f, 5.f, 10.f), GLH::Vec3f(1.f, 0.f, 0.f).normalize(), 500.f);
+	GLH::addDirectionalLight(GLH::Vec3f(8.f, 0.4f, 0.2f), GLH::Vec3f(2.f, 3.f, 5.f).normalize(), 0.1f);
+	GLH::addAmbientLight(GLH::Vec3f(0.1f, 0.f, 0.f));
+
 
 	bool running = true;
 	while (running)
@@ -82,34 +87,43 @@ int main()
 			player.updatePhysics(1.1f);
 
 			GLH::setUniformFloat(shader, "time", (float)(lastTime / 100.f));
-			GLH::updateCamera(shader, player.pos, player.rot, fov);
 		}
 
-		GLH::clear(0, 0, 0);
+		GLH::clear(250, 0, 0);
+
+		GLH::useShader(skyboxShader);
+		GLH::drawSkybox(player.rot, fov, skybox);
+
+		GLH::clearDepth();
 
 		GLH::useShader(shader);
+		GLH::updateCamera(player.pos, player.rot, fov);
+
 
 		int gridSize = 10;
 		size_t triCount = 0;
 
 		//GLH::useTexture(carnoTex);
-		//for (int x = -gridSize; x < gridSize; ++x)
-		//	for (int z = -gridSize + 0; z < gridSize; z += 1)
+		//for (int x = -gridSize; x < gridSize; x += 2)
+		//	for (int z = -gridSize + 0; z < gridSize; z += 2)
 		//	{
 		//		GLH::drawModel(carnoModel,
 		//			GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
 		//			GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, 0.f),
-		//			GLH::Vec3f(1.f, 1.f, 1.f));
+		//			GLH::Vec3f(5.f, 5.f, 5.f));
 		//		triCount += carnoModel.size / 3;
 		//	}
 
-		//GLH::useTexture(pterTex);
-		//for (int x = -gridSize; x < gridSize; ++x)
-		//	for (int z = -gridSize + 1; z < gridSize; z += 4)
-		//		GLH::drawModel(pterModel,
-		//			GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-		//			GLH::Vec3f(0.f, 0.f, ((x + z) * 10.f + lastTime / 10.f)),
-		//			GLH::Vec3f(1.f, 1.f, 1.f));
+		GLH::useTexture(pterTex);
+		for (int x = -gridSize; x < gridSize; x += 3)
+			for (int z = -gridSize; z < gridSize; z += 2)
+			{
+				GLH::drawModel(pterModel,
+					GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
+					GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, 0.f),
+					GLH::Vec3f(2.f, 2.f, 2.f));
+					triCount += pterModel.size / 3;
+			}
 
 		//GLH::useTexture(ankyTex);
 		//for (int x = -gridSize; x < gridSize; ++x)
@@ -119,16 +133,23 @@ int main()
 		//			GLH::Vec3f(0.f, ((x + z) * 10.f + lastTime / 10.f), 0.f),
 		//			GLH::Vec3f(1.f, 1.f, 1.f));
 
-		GLH::useTexture(rhampTex);
-		for (int x = -gridSize; x < gridSize; ++x)
-			for (int z = -gridSize + 0; z < gridSize; z += 1)
-			{
-				GLH::drawModel(rhampModel,
-					GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-					GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, ((x + z) * 10.f + lastTime / 10.f)),
-					GLH::Vec3f(1.f, 1.f, 1.f));
-				triCount += rhampModel.size / 3;
-			}
+		//for (int x = -gridSize; x < gridSize; ++x)
+		//	for (int z = -gridSize + 0; z < gridSize; z += 1)
+		//	{
+		//		GLH::useTexture(rhampTex);
+		//		GLH::drawModel(rhampModel,
+		//			GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
+		//			GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, ((x + z) * 10.f + lastTime / 10.f)),
+		//			GLH::Vec3f(1.f, 1.f, 1.f));
+		//		triCount += rhampModel.size / 3;
+		//
+		//		//GLH::useTexture(GLH::noTexture);
+		//		//GLH::drawModel(sphere,
+		//		//	GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
+		//		//	GLH::Vec3f(0.f, 0.f, 0.f),
+		//		//	GLH::Vec3f(1.f, 1.f, 1.f));
+		//		//triCount += sphere.size / 3;
+		//	}
 
 		SDL_GL_SwapWindow(window);
 		++fpsCount;
@@ -153,6 +174,13 @@ int main()
 	GLH::unloadTexture(ankyTex);
 	GLH::unloadModel(rhampModel);
 	GLH::unloadTexture(rhampTex);
+
+	//GLH::unloadModel(sphere);
+	//GLH::unloadTexture(GLH::noTexture);
+
+	GLH::unloadShader(skyboxShader);
+	GLH::unloadTexture(skybox);
+	GLH::unloadModel(GLH::cubeModel);
 
 	SDL_DestroyWindow(window);
 	SDL_GL_DestroyContext(glCtx);

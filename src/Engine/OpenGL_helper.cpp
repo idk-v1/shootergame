@@ -10,6 +10,16 @@
 #include <fstream>
 #include <sstream>
 
+//https://www.reddit.com/r/opengl/comments/unc3fy/how_to_programatically_set_the_gpu_to_my_opengl/
+#ifdef _WIN32
+extern "C"
+{
+	typedef unsigned long DWORD;
+	_declspec(dllexport) DWORD NvOptimusEnablement = 1;
+	_declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+#endif
+
 size_t GLH::screenW = 0, GLH::screenH = 0;
 
 std::string GLH::loadTextFile(const std::string& name)
@@ -224,6 +234,8 @@ void GLH::drawModel(const OGL_Model& model,
 	mat(2, 3) = oz;
 	mat(3, 3) = 1.f;
 
+	// check if model bounding sphere should be culled
+
 	setUniformMat4(activeShader, "modelMat", mat);
 	glBindVertexArray(model.vao);
 
@@ -312,6 +324,11 @@ void GLH::clear(float r, float g, float b)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+void GLH::clearDepth()
+{
+	glClear(GL_DEPTH_BUFFER_BIT);
+}
+
 void GLH::setUniformVec3(GLuint shader, const std::string& name, Vec3f value)
 {
 	setUniformVec3(shader, name.data(), value);
@@ -393,12 +410,13 @@ int GLH::addAmbientLight(Vec3f rgb)
 	return addLight(light);
 }
 
-int GLH::addDirectionalLight(Vec3f rgb, Vec3f normal)
+int GLH::addDirectionalLight(Vec3f rgb, Vec3f normal, float spread)
 {
 	Light light = { 0 };
 	light.rgb = rgb;
 	light.norm = normal;
 	light.type = 2.f;
+	light.spread = 1.f / spread;
 	return addLight(light);
 }
 
@@ -412,13 +430,14 @@ int GLH::addPointLight(Vec3f rgb, Vec3f pos, float strength)
 	return addLight(light);
 }
 
-int GLH::addDirectionalPointLight(Vec3f rgb, Vec3f pos, Vec3f normal, float strength)
+int GLH::addDirectionalPointLight(Vec3f rgb, Vec3f pos, Vec3f normal, float strength, float spread)
 {
 	Light light = { 0 };
 	light.rgb = rgb;
 	light.pos = pos;
 	light.norm = normal;
 	light.str = strength;
+	light.spread = 1.f / spread;
 	light.type = 4.f;
 	return addLight(light);
 }
@@ -446,7 +465,7 @@ void GLH::removeLight(int index)
 }
 
 
-void GLH::updateCamera(GLuint shader, Vec3f pos, Vec3f rot, float fov)
+void GLH::updateCamera(Vec3f pos, Vec3f rot, float fov)
 {
 	Matrix4 projMat = { 0 };
 	Matrix4 viewMat = { 0 };
@@ -484,7 +503,173 @@ void GLH::updateCamera(GLuint shader, Vec3f pos, Vec3f rot, float fov)
 	viewMat(2, 3) =  dir.dot(pos);
 	viewMat(3, 3) =  1.f;
 
-	setUniformVec3(shader, "camPos", pos);
-	setUniformMat4(shader, "projMat", projMat);
-	setUniformMat4(shader, "viewMat", viewMat);
+	setUniformVec3(activeShader, "camPos", pos);
+	setUniformMat4(activeShader, "projMat", projMat);
+	setUniformMat4(activeShader, "viewMat", viewMat);
+}
+
+
+GLH::OGL_Model GLH::cubeModel = { 0 };
+
+void GLH::loadCubeModel()
+{
+	float skyboxVertices[] = 
+	{
+	-1.0f,  1.0f, -1.0f,
+	-1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	-1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f
+	};
+
+	memset(&cubeModel, 0, sizeof(OGL_Model));
+	cubeModel.size = sizeof(skyboxVertices) / sizeof(float) / 3;
+
+	glGenVertexArrays(1, &cubeModel.vao);
+	glBindVertexArray(cubeModel.vao);
+
+	glGenBuffers(1, &cubeModel.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeModel.vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vec3f), (void*)0);
+	glEnableVertexAttribArray(0);
+}
+
+GLuint GLH::loadSkybox(const std::string& name)
+{
+	int width, height, comp;
+	stbi_set_flip_vertically_on_load(false);
+	stbi_uc* data = stbi_load(name.data(), &width, &height, &comp, 4);
+	if (data)
+	{
+		int cubeSize = height / 3;
+
+		stbi_uc* subData = (stbi_uc*)malloc(cubeSize * cubeSize * 4);
+		if (subData)
+		{
+			int coords[] =
+			{
+				2, 1, // +x
+				0, 1, // -x
+				1, 0, // +y
+				1, 2, // -y
+				1, 1, // +z
+				3, 1, // -z
+			};
+
+			GLuint id = 0;
+			glGenTextures(1, &id);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+			for (int i = 0; i < 6; ++i)
+			{
+				for (int y = 0; y < cubeSize; ++y)
+				{
+					int ox = cubeSize * coords[i * 2];
+					int oy = width * (coords[i * 2 + 1] * cubeSize + y);
+					memcpy(subData + cubeSize * 4 * y, data + (ox + oy) * 4, cubeSize * 4);
+				}
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, cubeSize, cubeSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, subData);
+			}
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+			free(subData);
+			stbi_image_free(data);
+			return id;
+		}
+		else
+			stbi_image_free(data);
+
+	}
+
+	std::cout << "Failed to load image: " << name << '\n';
+	return 0;
+}
+
+
+void GLH::drawSkybox(Vec3f rot, float fov, GLuint texture)
+{
+	Matrix4 projMat = { 0 };
+	Matrix4 viewMat = { 0 };
+
+	float aspect = (float)screenW / (float)screenH;
+
+	float far = 1000.f;
+	float near = 0.01f;
+
+	projMat(0, 0) = 1.f / (aspect * tanf(toRad(fov) / 2.f));
+	projMat(1, 1) = 1.f / tanf(toRad(fov) / 2.f);
+	projMat(2, 2) = (far + near) / (near - far);
+	projMat(3, 2) = -1.f;
+	projMat(2, 3) = -(2.f * far * near) / (far - near);
+
+	Vec3f dir = Vec3f(
+		-sinf(toRad(rot.y)) * cosf(toRad(rot.x)),
+		sinf(toRad(rot.x)),
+		-cosf(toRad(rot.y)) * cosf(toRad(rot.x))
+	).normalize();
+	Vec3f right = dir.cross(Vec3f(0.f, 1.f, 0.f)).normalize();
+	Vec3f up = right.cross(dir);
+
+	Vec3f pos(0.f, 0.f, 0.f);
+	viewMat(0, 0) = right.x;
+	viewMat(0, 1) = right.y;
+	viewMat(0, 2) = right.z;
+	viewMat(1, 0) = up.x;
+	viewMat(1, 1) = up.y;
+	viewMat(1, 2) = up.z;
+	viewMat(2, 0) = -dir.x;
+	viewMat(2, 1) = -dir.y;
+	viewMat(2, 2) = -dir.z;
+	viewMat(0, 3) = -right.dot(pos);
+	viewMat(1, 3) = -up.dot(pos);
+	viewMat(2, 3) = dir.dot(pos);
+	viewMat(3, 3) = 1.f;
+
+	setUniformMat4(activeShader, "projMat", projMat);
+	setUniformMat4(activeShader, "viewMat", viewMat);
+
+	glBindVertexArray(cubeModel.vao);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+	glDrawArrays(GL_TRIANGLES, 0, cubeModel.size);
 }

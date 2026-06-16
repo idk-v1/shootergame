@@ -48,6 +48,7 @@ namespace GLH
 	extern size_t screenW, screenH;
 
 	void clear(float r = 0.f, float g = 0.f, float b = 0.f);
+	void clearDepth();
 
 	struct Matrix4
 	{
@@ -109,20 +110,26 @@ namespace GLH
 		Vec3f norm;
 		float str;
 		float type; // easier if its a float, treat like int
-		float dummy;
+		float spread;
 	};
 	int addLight(const Light& light);
 	int addAmbientLight(Vec3f rgb);
-	int addDirectionalLight(Vec3f rgb, Vec3f normal);
+	int addDirectionalLight(Vec3f rgb, Vec3f normal, float spread);
 	int addPointLight(Vec3f rgb, Vec3f pos, float strength);
-	int addDirectionalPointLight(Vec3f rgb, Vec3f pos, Vec3f normal, float strength);
+	int addDirectionalPointLight(Vec3f rgb, Vec3f pos, Vec3f normal, float strength, float spread);
 	void setLight(const Light& light, int index);
 	void removeLight(int index);
 	extern int lightCount;
 	extern bool lightStates[];
 	extern Light lights[];
 
-	void updateCamera(GLuint shader, Vec3f pos, Vec3f rot, float fov);
+	void updateCamera(Vec3f pos, Vec3f rot, float fov);
+
+
+	extern OGL_Model cubeModel;
+	void loadCubeModel();
+	GLuint loadSkybox(const std::string& name);
+	void drawSkybox(Vec3f rot, float fov, GLuint texture);
 }
 
 #endif
