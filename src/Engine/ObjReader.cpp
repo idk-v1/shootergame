@@ -101,28 +101,40 @@ std::vector<GLH::Vertex> readObjFile(const std::string& name)
 			{
 				char* str = &line[1];
 				bool hasNormals = true;
+				bool hasSlashes = strchr(line, '/');
 				for (int i = 0; i < 3; ++i)
 				{
 					GLH::Vertex vertex = { 0 };
+
 					int64_t coord = strtoll(str, &str, 10);
-					int64_t texCoord = strtoll(str + 1, &str, 10);
-					int64_t normal = strtoll(str + 1, &str, 10);
-
 					// negative means size - pos
-
 					if (coord < 0) coord = points.size() + coord + 1;
-					if (coord > 0) vertex.pos = points[coord - 1];
+					if (coord - 1 < points.size())
+						if (coord > 0) vertex.pos = points[coord - 1];
 
-					// textures are optional, default (0, 0) works fine
-					if (texCoord < 0) texCoord = texCoords.size() + texCoord + 1;
-					if (texCoord > 0) vertex.tex = texCoords[texCoord - 1];
+					if (hasSlashes)
+					{
+						int64_t texCoord = strtoll(str + 1, &str, 10);
+						int64_t normal = strtoll(str + 1, &str, 10);
 
-					// normals are optional, generate if not found
-					if (normal < 0) normal = normals.size() + normal + 1;
-					if (normal > 0) vertex.norm = normals[normal - 1];
-					// there shouldn't be normals missing on SOME
-					// but if so, regenerate all
-					else hasNormals = false; 
+						// textures are optional, default (0, 0) works fine
+						if (texCoord < 0) texCoord = texCoords.size() + texCoord + 1;
+						if (texCoord - 1 < texCoords.size())
+							if (texCoord > 0) vertex.tex = texCoords[texCoord - 1];
+
+						// normals are optional, generate if not found
+						if (normal < 0) normal = normals.size() + normal + 1;
+
+						if (normal > 0)
+						{
+							if (normal - 1 < normals.size())
+								vertex.norm = normals[normal - 1];
+							// there shouldn't be normals missing on SOME
+							// but if so, regenerate all
+						}
+						else hasNormals = false;
+					}
+					else hasNormals = false;
 
 					verts.push_back(vertex);
 				}
