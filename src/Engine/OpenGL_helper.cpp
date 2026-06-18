@@ -672,5 +672,7 @@ void GLH::drawSkybox(Vec3f rot, float fov, GLuint texture)
 
 	glBindVertexArray(cubeModel.vao);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+	glDisable(GL_DEPTH_TEST);
 	glDrawArrays(GL_TRIANGLES, 0, cubeModel.size);
+	glEnable(GL_DEPTH_TEST);
 }

@@ -21,7 +21,7 @@ int main()
 	SDL_GL_SetSwapInterval(0); // 0 - free refresh / 1 - vsync
 	gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
 
-	GLH::setViewSize(600, 600);
+	GLH::setViewSize(800, 600);
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
 	glEnable(GL_DEPTH_TEST);
@@ -32,14 +32,14 @@ int main()
 	GLuint skybox = GLH::loadSkybox("res/skybox.png");
 	GLH::loadCubeModel();
 
-	GLH::OGL_Model carnoModel = GLH::loadModel("res/carno.obj", 0.02f);
-	GLuint carnoTex = GLH::loadTexture("res/carno.png");
+	//GLH::OGL_Model carnoModel = GLH::loadModel("res/carno.obj", 0.02f);
+	//GLuint carnoTex = GLH::loadTexture("res/carno.png");
 	GLH::OGL_Model pterModel = GLH::loadModel("res/pter.obj", 0.1f);
 	GLuint pterTex = GLH::loadTexture("res/pter.png");
-	GLH::OGL_Model ankyModel = GLH::loadModel("res/anky.obj", 0.1f);
-	GLuint ankyTex = GLH::loadTexture("res/anky.png");
-	GLH::OGL_Model rhampModel = GLH::loadModel("res/rhamp.obj", 1.f);
-	GLuint rhampTex = GLH::loadTexture("res/rhamp.png");
+	//GLH::OGL_Model ankyModel = GLH::loadModel("res/anky.obj", 0.1f);
+	//GLuint ankyTex = GLH::loadTexture("res/anky.png");
+	//GLH::OGL_Model rhampModel = GLH::loadModel("res/rhamp.obj", 1.f);
+	//GLuint rhampTex = GLH::loadTexture("res/rhamp.png");
 
 	//GLH::OGL_Model sphere = GLH::loadModel("res/sphere.obj", 1.f / 0.695000827f * rhampModel.boundingRad);
 	//GLH::loadNoTexture();
@@ -61,7 +61,7 @@ int main()
 
 
 	bool running = true;
-	bool paused = false;
+	bool paused = true;
 	bool escLast = false;
 	bool focused = true;
 
@@ -127,12 +127,12 @@ int main()
 			}
 		}
 
-		GLH::clear(250, 0, 0);
+		//GLH::clear(250, 0, 0);
+		GLH::clearDepth();
 
 		GLH::useShader(skyboxShader);
 		GLH::drawSkybox(player.rot, fov, skybox);
 
-		GLH::clearDepth();
 
 		GLH::useShader(shader);
 		GLH::updateCamera(player.pos, player.rot, fov);
@@ -205,14 +205,14 @@ int main()
 
 	GLH::unloadShader(shader);
 
-	GLH::unloadModel(carnoModel);
-	GLH::unloadTexture(carnoTex);
+	//GLH::unloadModel(carnoModel);
+	//GLH::unloadTexture(carnoTex);
 	GLH::unloadModel(pterModel);
 	GLH::unloadTexture(pterTex);
-	GLH::unloadModel(ankyModel);
-	GLH::unloadTexture(ankyTex);
-	GLH::unloadModel(rhampModel);
-	GLH::unloadTexture(rhampTex);
+	//GLH::unloadModel(ankyModel);
+	//GLH::unloadTexture(ankyTex);
+	//GLH::unloadModel(rhampModel);
+	//GLH::unloadTexture(rhampTex);
 
 	//GLH::unloadModel(sphere);
 	//GLH::unloadTexture(GLH::noTexture);
