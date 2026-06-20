@@ -1,6 +1,12 @@
 #include "OpenGL_helper.h"
 #include "ObjReader.h"
 
+#define STBI_NO_PSD
+#define STBI_NO_TGA
+#define STBI_NO_GIF
+#define STBI_NO_HDR
+#define STBI_NO_PIC
+#define STBI_NO_PNM
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -225,7 +231,7 @@ void GLH::drawModel(const OGL_Model& model, GLuint texture,
 
 	glUniform1iv(glGetUniformLocation(activeShader, "lightStates"), 10, lightStates);
 
-	glDrawArrays(GL_TRIANGLES, 0, model.size);
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.size);
 }
 
 
@@ -263,7 +269,7 @@ GLuint GLH::loadTexture(uint8_t* data, size_t width, size_t height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)width, (GLsizei)height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	return texture;
@@ -282,7 +288,7 @@ void GLH::useTexture(GLuint texture, GLuint slot)
 
 void GLH::setViewSize(size_t w, size_t h)
 {
-	glViewport(0, 0, w, h);
+	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 	screenW = w;
 	screenH = h;
 }
@@ -642,7 +648,7 @@ void GLH::drawSkybox(Vec3f rot, float fov, GLuint texture)
 	glBindVertexArray(cubeModel.vao);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
 	glDisable(GL_DEPTH_TEST);
-	glDrawArrays(GL_TRIANGLES, 0, cubeModel.size);
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cubeModel.size);
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -755,7 +761,7 @@ void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f 
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBindVertexArray(ballModel.vao);
-	glDrawArrays(GL_TRIANGLES, 0, ballModel.size);
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)ballModel.size);
 	glFrontFace(GL_CCW);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
