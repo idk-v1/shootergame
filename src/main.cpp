@@ -142,7 +142,7 @@ int main()
 		if (useFancyClouds)
 		{
 			GLH::useShader(cloudShader);
-			GLH::drawCloudBall(player.rot, 100.f, 105.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 30.f));
+			GLH::drawCloudBall(player.rot, 100.f, 125.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 3.f));
 
 			GLH::useShader(skyboxShader);
 			GLH::drawSkybox(player.rot, fov, skyboxTerrain);
