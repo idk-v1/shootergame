@@ -44,7 +44,7 @@ void playerController(GLH::Entity& player, float lookSpeed, float& fov, SDL_Wind
 	player.vel += acc;
 
 	float mouseX = 0, mouseY = 0;
-	SDL_GetRelativeMouseState(&mouseX, &mouseY);
+	SDL_MouseButtonFlags mouse = SDL_GetRelativeMouseState(&mouseX, &mouseY);
 	int w = 0, h = 0;
 	SDL_GetWindowSize(window, &w, &h);
 	SDL_WarpMouseInWindow(window, w / 2.f, h / 2.f);
@@ -59,7 +59,7 @@ void playerController(GLH::Entity& player, float lookSpeed, float& fov, SDL_Wind
 	if (player.rot.y >= 360.f)
 		player.rot.y = fmodf(player.rot.y, 360.f);
 
-	if (keys[SDL_SCANCODE_RSHIFT])
+	if (mouse & 0b100)
 		fov = fmaxf(fov - 2.f, 10.f);
 	else
 		fov = fminf(fov + 2.f, 90.f);

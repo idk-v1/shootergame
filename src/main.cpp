@@ -30,7 +30,10 @@ int main()
 	GLuint skyboxShader = GLH::loadShader("src/Engine/shaders/skybox.vert", "src/Engine/shaders/skybox.frag");
 
 	GLuint skybox = GLH::loadSkybox("res/skybox.png");
+	GLuint skyboxTerrain = GLH::loadSkybox("res/skyboxTerrain.png");
 	GLH::loadCubeModel();
+
+	GLuint cloudBoxShader = GLH::loadShader("src/Engine/shaders/cloudbox.vert", "src/Engine/shaders/cloudbox.frag");
 
 	//GLH::OGL_Model carnoModel = GLH::loadModel("res/carno.obj", 0.02f);
 	//GLuint carnoTex = GLH::loadTexture("res/carno.png");
@@ -41,7 +44,7 @@ int main()
 	//GLH::OGL_Model rhampModel = GLH::loadModel("res/rhamp.obj", 1.f);
 	//GLuint rhampTex = GLH::loadTexture("res/rhamp.png");
 
-	//GLH::OGL_Model sphere = GLH::loadModel("res/sphere.obj", 1.f / 0.695000827f * rhampModel.boundingRad);
+	GLH::OGL_Model sphere = GLH::loadModel("res/sphere.obj", 1.f / 0.695000827f);
 	//GLH::loadNoTexture();
 
 	GLH::Entity player(GLH::Vec3f(0.f, 0.f, 0.f), GLH::Vec3f(0.f, 0.f, 0.f), 0.02f);
@@ -133,6 +136,23 @@ int main()
 		GLH::useShader(skyboxShader);
 		GLH::drawSkybox(player.rot, fov, skybox);
 
+		
+		GLH::drawCloudBall(player.rot, 50.f, 125.f, fov, ticks);
+		glFrontFace(GL_CW);
+		glEnable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		GLH::useShader(cloudBoxShader);
+		GLH::updateCamera(GLH::Vec3f(0.f, 50.f, 0.f), player.rot, fov);
+		GLH::setUniformFloat(GLH::activeShader, "time", ticks);
+		GLH::drawModel(sphere, GLH::Vec3f(0.f), GLH::Vec3f(0.f, 0.f, ticks / 3.f), GLH::Vec3f(125.f));
+		glFrontFace(GL_CCW);
+		glDisable(GL_BLEND);
+		glEnable(GL_DEPTH_TEST);
+		//GLH::drawCloudbox(player.rot, fov, ticks);
+
+		GLH::useShader(skyboxShader);
+		GLH::drawSkybox(player.rot, fov, skyboxTerrain);
 
 		GLH::useShader(shader);
 		GLH::updateCamera(player.pos, player.rot, fov);
@@ -214,11 +234,13 @@ int main()
 	//GLH::unloadModel(rhampModel);
 	//GLH::unloadTexture(rhampTex);
 
-	//GLH::unloadModel(sphere);
+	GLH::unloadModel(sphere);
 	//GLH::unloadTexture(GLH::noTexture);
 
+	GLH::unloadShader(cloudBoxShader);
 	GLH::unloadShader(skyboxShader);
 	GLH::unloadTexture(skybox);
+	GLH::unloadTexture(skyboxTerrain);
 	GLH::unloadModel(GLH::cubeModel);
 
 	SDL_DestroyWindow(window);

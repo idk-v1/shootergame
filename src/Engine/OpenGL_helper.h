@@ -130,6 +130,8 @@ namespace GLH
 	void loadCubeModel();
 	GLuint loadSkybox(const std::string& name);
 	void drawSkybox(Vec3f rot, float fov, GLuint texture);
+
+	void drawCloudBall(Vec3f rot, float height, float radius, float fov, size_t time);
 }
 
 #endif

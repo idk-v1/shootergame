@@ -676,3 +676,57 @@ void GLH::drawSkybox(Vec3f rot, float fov, GLuint texture)
 	glDrawArrays(GL_TRIANGLES, 0, cubeModel.size);
 	glEnable(GL_DEPTH_TEST);
 }
+
+void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, size_t time)
+{
+	Matrix4 projMat = { 0 };
+	Matrix4 viewMat = { 0 };
+
+	float aspect = (float)screenW / (float)screenH;
+
+	float far = 1000.f;
+	float near = 0.01f;
+
+	projMat(0, 0) = 1.f / (aspect * tanf(toRad(fov) / 2.f));
+	projMat(1, 1) = 1.f / tanf(toRad(fov) / 2.f);
+	projMat(2, 2) = (far + near) / (near - far);
+	projMat(3, 2) = -1.f;
+	projMat(2, 3) = -(2.f * far * near) / (far - near);
+
+	Vec3f dir = Vec3f(
+		-sinf(toRad(rot.y)) * cosf(toRad(rot.x)),
+		sinf(toRad(rot.x)),
+		-cosf(toRad(rot.y)) * cosf(toRad(rot.x))
+	).normalize();
+	Vec3f right = dir.cross(Vec3f(0.f, 1.f, 0.f)).normalize();
+	Vec3f up = right.cross(dir);
+
+	Vec3f pos(0.f, height, 0.f);
+	viewMat(0, 0) = right.x;
+	viewMat(0, 1) = right.y;
+	viewMat(0, 2) = right.z;
+	viewMat(1, 0) = up.x;
+	viewMat(1, 1) = up.y;
+	viewMat(1, 2) = up.z;
+	viewMat(2, 0) = -dir.x;
+	viewMat(2, 1) = -dir.y;
+	viewMat(2, 2) = -dir.z;
+	viewMat(0, 3) = -right.dot(pos);
+	viewMat(1, 3) = -up.dot(pos);
+	viewMat(2, 3) = dir.dot(pos);
+	viewMat(3, 3) = 1.f;
+
+	setUniformMat4(activeShader, "projMat", projMat);
+	setUniformMat4(activeShader, "viewMat", viewMat);
+	setUniformFloat(activeShader, "time", time / 300.f);
+
+	glBindVertexArray(cubeModel.vao);
+	glFrontFace(GL_CW);
+	glEnable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDrawArrays(GL_TRIANGLES, 0, cubeModel.size);
+	glFrontFace(GL_CCW);
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+}
