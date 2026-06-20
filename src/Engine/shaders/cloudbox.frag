@@ -44,11 +44,11 @@ void main()
 	float cloud = fbm(TexCoords * scale);
 
 	if (cloud < 0.25f)
-		discard;
+		discard;                                                                // [0.00 - 0.25]
 	else if (cloud < 0.50f)
-		FragColor = mix(noClouds, thinClouds, (cloud - 0.25f) * 4.f);     // [0.25 - 0.50]
+		FragColor = mix(noClouds, thinClouds, pow((cloud - 0.25f) * 4.f, 3.f)); // [0.25 - 0.50]
 	else if (cloud < 0.75f)
-		FragColor = mix(thinClouds, normalClouds, (cloud - 0.50f) * 4.f); // [0.50 - 0.75]
+		FragColor = mix(thinClouds, normalClouds, (cloud - 0.50f) * 4.f);       // [0.50 - 0.75]
 	else
-		FragColor = mix(normalClouds, darkClouds, (cloud - 0.75f) * 4.f); // [0.75 - 1.00]
+		FragColor = mix(normalClouds, darkClouds, (cloud - 0.75f) * 4.f);       // [0.75 - 1.00]
 }
