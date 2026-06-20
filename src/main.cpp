@@ -34,8 +34,14 @@ int main()
 	GLuint skyboxTerrain = GLH::loadSkybox("res/skyboxTerrain.png");
 	GLH::loadCubeModel();
 
-	GLuint cloudShader = GLH::loadShader("src/Engine/shaders/cloudbox.vert", "src/Engine/shaders/cloudbox.frag");
-	GLH::loadBallModel();
+
+	bool useFancyClouds = true;
+	GLuint cloudShader = 0;
+	if (useFancyClouds)
+	{
+		GLH::loadBallModel();
+		cloudShader = GLH::loadShader("src/Engine/shaders/cloudbox.vert", "src/Engine/shaders/cloudbox.frag");
+	}
 
 	GLH::OGL_Model pterModel = GLH::loadModel("res/pter.obj", 0.1f);
 	GLuint pterTex = GLH::loadTexture("res/pter.png");
@@ -131,11 +137,14 @@ int main()
 		GLH::useShader(skyboxShader);
 		GLH::drawSkybox(player.rot, fov, skybox);
 		
-		GLH::useShader(cloudShader);
-		GLH::drawCloudBall(player.rot, 100.f, 105.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 8.f));
+		if (useFancyClouds)
+		{
+			GLH::useShader(cloudShader);
+			GLH::drawCloudBall(player.rot, 100.f, 105.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 30.f));
 
-		GLH::useShader(skyboxShader);
-		GLH::drawSkybox(player.rot, fov, skyboxTerrain);
+			GLH::useShader(skyboxShader);
+			GLH::drawSkybox(player.rot, fov, skyboxTerrain);
+		}
 
 		GLH::useShader(shader);
 		GLH::updateCamera(player.pos, player.rot, fov);
@@ -177,8 +186,11 @@ int main()
 	GLH::unloadModel(pterModel);
 	GLH::unloadTexture(pterTex);
 
-	GLH::unloadShader(cloudShader);
-	GLH::unloadModel(GLH::ballModel);
+	if (useFancyClouds)
+	{
+		GLH::unloadShader(cloudShader);
+		GLH::unloadModel(GLH::ballModel);
+	}
 
 	GLH::unloadShader(skyboxShader);
 	GLH::unloadTexture(skybox);
