@@ -704,9 +704,9 @@ void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f 
 	float ax = radius;
 	float ay = radius;
 	float az = radius;
-	float ox = pos.x;
-	float oy = pos.y;
-	float oz = pos.z;
+	float ox = 0.f;
+	float oy = 0.f;
+	float oz = 0.f;
 	float cx = cosf(rx);
 	float cy = cosf(ry);
 	float cz = cosf(rz);

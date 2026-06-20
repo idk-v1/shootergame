@@ -135,7 +135,7 @@ int main()
 		GLH::drawSkybox(player.rot, fov, skybox);
 		
 		GLH::useShader(cloudShader);
-		GLH::drawCloudBall(player.rot, 50.f, 125.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 8.f));
+		GLH::drawCloudBall(player.rot, 100.f, 105.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 8.f));
 
 		GLH::useShader(skyboxShader);
 		GLH::drawSkybox(player.rot, fov, skyboxTerrain);

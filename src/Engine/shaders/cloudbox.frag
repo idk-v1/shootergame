@@ -3,6 +3,7 @@ out vec4 FragColor;
 
 in vec3 TexCoords;
 
+// https://github.com/shff/opengl_sky
 
 float hash(float n)
 {
@@ -42,8 +43,10 @@ void main()
 	const float scale = 5.f;
 	float cloud = fbm(TexCoords * scale);
 
-	if (cloud < 0.5f)
-		FragColor = mix(noClouds, thinClouds, cloud * 2.f);               // [0.00 - 0.50]
+	if (cloud < 0.25f)
+		discard;
+	else if (cloud < 0.50f)
+		FragColor = mix(noClouds, thinClouds, (cloud - 0.25f) * 4.f);     // [0.25 - 0.50]
 	else if (cloud < 0.75f)
 		FragColor = mix(thinClouds, normalClouds, (cloud - 0.50f) * 4.f); // [0.50 - 0.75]
 	else
