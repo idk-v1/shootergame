@@ -167,46 +167,13 @@ bool sphereCollision(GLH::Vec3f aPos, GLH::Vec3f bPos, float aRad, float bRad)
 	return (dist < (aRad + bRad) * (aRad + bRad));
 }
 
-void GLH::drawModel(const OGL_Model& model, 
+void GLH::drawModel(const OGL_Model& model, GLuint texture,
 	const Vec3f& pos, const Vec3f& rot, const Vec3f& scale)
 {
 	Matrix4 mat;
 	float rx = toRad(rot.x);
 	float ry = toRad(rot.y);
 	float rz = toRad(rot.z);
-	//mat(0, 0) = scale.x;
-	//mat(1, 1) = scale.y;
-	//mat(2, 2) = scale.z;
-	//mat(0, 3) = pos.x;
-	//mat(1, 3) = pos.y;
-	//mat(2, 3) = pos.z;
-	//mat(3, 3) = 1.f;
-	
-	//Matrix4 rotMatX;
-	//rotMatX(0, 0) = 1.f;
-	//rotMatX(1, 1) = cosf(rx);
-	//rotMatX(2, 1) = -sinf(rx);
-	//rotMatX(1, 2) = sinf(rx);
-	//rotMatX(2, 2) = cosf(rx);
-	//rotMatX(3, 3) = 1.f;
-	
-	//Matrix4 rotMatY;
-	//rotMatY(0, 0) = cosf(ry);
-	//rotMatY(2, 0) = sinf(ry);
-	//rotMatY(1, 1) = 1.f;
-	//rotMatY(0, 2) = -sinf(ry);
-	//rotMatY(2, 2) = cosf(ry);
-	//rotMatY(3, 3) = 1.f;
-	
-	//Matrix4 rotMatZ;
-	//rotMatZ(0, 0) = cosf(rz);
-	//rotMatZ(1, 0) = -sinf(rz);
-	//rotMatZ(0, 1) = sinf(rz);
-	//rotMatZ(1, 1) = cosf(rz);
-	//rotMatZ(2, 2) = 1.f;
-	//rotMatZ(3, 3) = 1.f;
-	
-	//mat = mat * rotMatX * rotMatY * rotMatZ;
 
 	float ax = scale.x;
 	float ay = scale.y;
@@ -238,6 +205,8 @@ void GLH::drawModel(const OGL_Model& model,
 
 	setUniformMat4(activeShader, "modelMat", mat);
 	glBindVertexArray(model.vao);
+
+	GLH::useTexture(texture);
 
 
 	int lightStates[10] = { 0 }; // ceil(300 / 32) = 10
@@ -677,7 +646,18 @@ void GLH::drawSkybox(Vec3f rot, float fov, GLuint texture)
 	glEnable(GL_DEPTH_TEST);
 }
 
-void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, size_t time)
+
+GLH::OGL_Model GLH::ballModel;
+
+
+void GLH::loadBallModel()
+{
+	// change later to non full model
+	// only needs verts
+	ballModel = loadModel("res/sphere.obj", 1.f / 0.695000827f);
+}
+
+void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f move)
 {
 	Matrix4 projMat = { 0 };
 	Matrix4 viewMat = { 0 };
@@ -716,16 +696,47 @@ void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, size_t
 	viewMat(2, 3) = dir.dot(pos);
 	viewMat(3, 3) = 1.f;
 
+	Matrix4 mat;
+	float rx = toRad(move.x);
+	float ry = toRad(move.y);
+	float rz = toRad(move.z);
+
+	float ax = radius;
+	float ay = radius;
+	float az = radius;
+	float ox = pos.x;
+	float oy = pos.y;
+	float oz = pos.z;
+	float cx = cosf(rx);
+	float cy = cosf(ry);
+	float cz = cosf(rz);
+	float sx = sinf(rx);
+	float sy = sinf(ry);
+	float sz = sinf(rz);
+	mat(0, 0) = ax * cy * cz;
+	mat(0, 1) = ax * cy * sz;
+	mat(0, 2) = -ax * sy;
+	mat(0, 3) = ox;
+	mat(1, 0) = az * sx * sy * cz - ay * cx * sz;
+	mat(1, 1) = az * sx * sy * sz + ay * cx * cz;
+	mat(1, 2) = az * sx * cy;
+	mat(1, 3) = oy;
+	mat(2, 0) = az * cx * sy * cz + az * sx * sz;
+	mat(2, 1) = az * cx * sy * sz - az * sx * cz;
+	mat(2, 2) = az * cx * cy;
+	mat(2, 3) = oz;
+	mat(3, 3) = 1.f;
+
 	setUniformMat4(activeShader, "projMat", projMat);
 	setUniformMat4(activeShader, "viewMat", viewMat);
-	setUniformFloat(activeShader, "time", time / 300.f);
+	setUniformMat4(activeShader, "modelMat", mat);
 
-	glBindVertexArray(cubeModel.vao);
 	glFrontFace(GL_CW);
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDrawArrays(GL_TRIANGLES, 0, cubeModel.size);
+	glBindVertexArray(ballModel.vao);
+	glDrawArrays(GL_TRIANGLES, 0, ballModel.size);
 	glFrontFace(GL_CCW);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);

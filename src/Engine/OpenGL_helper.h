@@ -34,7 +34,7 @@ namespace GLH
 	OGL_Model loadModel(const std::string& name, float scale = 1.f);
 	OGL_Model loadModel(Vertex* verts, size_t length);
 	void unloadModel(OGL_Model& model);
-	void drawModel(const OGL_Model& model, const Vec3f& pos = {0.f, 0.f, 0.f},
+	void drawModel(const OGL_Model& model, GLuint texture, const Vec3f& pos = {0.f, 0.f, 0.f},
 		const Vec3f& rot = {0.f, 0.f, 0.f}, const Vec3f& scale = { 1.f, 1.f, 1.f });
 
 	GLuint loadTexture(const std::string& name);
@@ -131,7 +131,9 @@ namespace GLH
 	GLuint loadSkybox(const std::string& name);
 	void drawSkybox(Vec3f rot, float fov, GLuint texture);
 
-	void drawCloudBall(Vec3f rot, float height, float radius, float fov, size_t time);
+	extern OGL_Model ballModel;
+	void loadBallModel();
+	void drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f move);
 }
 
 #endif
