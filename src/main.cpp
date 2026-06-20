@@ -37,9 +37,6 @@ int main()
 	GLuint cloudShader = GLH::loadShader("src/Engine/shaders/cloudbox.vert", "src/Engine/shaders/cloudbox.frag");
 	GLH::loadBallModel();
 
-	GLH::loadNoTexture();
-
-
 	GLH::OGL_Model pterModel = GLH::loadModel("res/pter.obj", 0.1f);
 	GLuint pterTex = GLH::loadTexture("res/pter.png");
 
@@ -187,8 +184,6 @@ int main()
 	GLH::unloadTexture(skybox);
 	GLH::unloadTexture(skyboxTerrain);
 	GLH::unloadModel(GLH::cubeModel);
-
-	GLH::unloadTexture(GLH::noTexture);
 
 	SDL_DestroyWindow(window);
 	SDL_GL_DestroyContext(glCtx);
