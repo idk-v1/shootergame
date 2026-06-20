@@ -46,7 +46,7 @@ int main()
 	GLH::OGL_Model pterModel = GLH::loadModel("res/pter.obj", 0.1f);
 	GLuint pterTex = GLH::loadTexture("res/pter.png");
 
-	//GLH::OGL_Model sphere = GLH::loadModel("res/sphere.obj", 1.f / 40.6852f, GLH::Vec3f(6.89967, -1.65806, -18.158));
+	//GLH::OGL_Model sphere = GLH::loadModel("res/sphere.obj", 1.f / 0.0316395387f, GLH::Vec3f());
 
 
 	GLH::Entity player(GLH::Vec3f(0.f, 0.f, 0.f), GLH::Vec3f(0.f, 0.f, 0.f), 0.02f);
@@ -142,7 +142,7 @@ int main()
 		if (useFancyClouds)
 		{
 			GLH::useShader(cloudShader);
-			GLH::drawCloudBall(player.rot, 100.f, 125.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 3.f));
+			GLH::drawCloudBall(player.rot, 200.f, 225.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 30.f));
 
 			GLH::useShader(skyboxShader);
 			GLH::drawSkybox(player.rot, fov, skyboxTerrain);

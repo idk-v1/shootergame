@@ -37,8 +37,8 @@ void main()
 {
 	const vec4 noClouds     = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	const vec4 thinClouds   = vec4(1.0f, 1.0f, 1.0f, 0.3f);
-	const vec4 normalClouds = vec4(0.8f, 0.8f, 0.8f, 0.6f);
-	const vec4 darkClouds   = vec4(0.3f, 0.3f, 0.3f, 1.0f);
+	const vec4 normalClouds = vec4(0.8f, 0.8f, 0.8f, 0.7f);
+	const vec4 darkClouds   = vec4(0.5f, 0.5f, 0.5f, 1.0f);
 
 	const float scale = 5.f;
 	float cloud = fbm(TexCoords * scale);
