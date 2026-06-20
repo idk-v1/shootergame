@@ -31,7 +31,7 @@ namespace GLH
 		size_t size;
 		float boundingRad;
 	};
-	OGL_Model loadModel(const std::string& name, float scale = 1.f);
+	OGL_Model loadModel(const std::string& name, float scale = 1.f, GLH::Vec3f offset = GLH::Vec3f(0.f, 0.f, 0.f));
 	OGL_Model loadModel(Vertex* verts, size_t length);
 	void unloadModel(OGL_Model& model);
 	void drawModel(const OGL_Model& model, GLuint texture, const Vec3f& pos = {0.f, 0.f, 0.f},

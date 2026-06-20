@@ -46,6 +46,8 @@ int main()
 	GLH::OGL_Model pterModel = GLH::loadModel("res/pter.obj", 0.1f);
 	GLuint pterTex = GLH::loadTexture("res/pter.png");
 
+	//GLH::OGL_Model sphere = GLH::loadModel("res/sphere.obj", 1.f / 40.6852f, GLH::Vec3f(6.89967, -1.65806, -18.158));
+
 
 	GLH::Entity player(GLH::Vec3f(0.f, 0.f, 0.f), GLH::Vec3f(0.f, 0.f, 0.f), 0.02f);
 	float lookSpeed = 0.1f;
@@ -163,7 +165,7 @@ int main()
 						GLH::Vec3f(1.f, 1.f, 1.f));
 						triCount += pterModel.size / 3;
 
-						//GLH::drawModel(GLH::ballModel, GLH::noTexture, GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
+						//GLH::drawModel(sphere, GLH::noTexture, GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
 						//	GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks)),
 						//	GLH::Vec3f(pterModel.boundingRad));
 				}
@@ -185,6 +187,9 @@ int main()
 
 	GLH::unloadModel(pterModel);
 	GLH::unloadTexture(pterTex);
+
+	//GLH::unloadModel(sphere);
+	//GLH::unloadTexture(GLH::noTexture);
 
 	if (useFancyClouds)
 	{

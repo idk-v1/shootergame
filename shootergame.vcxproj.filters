@@ -317,6 +317,9 @@
     <ClInclude Include="src\Engine\Player.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Engine\buildinModels.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="SDL3.dll" />
