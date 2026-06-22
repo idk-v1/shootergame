@@ -223,7 +223,7 @@ int main()
 
 std::string getDir()
 {
-#ifdef __WIN32
+#ifdef _WIN32
 	char dir[MAX_PATH];
 	GetModuleFileNameA(NULL, dir.data(), MAX_PATH);
 #else
