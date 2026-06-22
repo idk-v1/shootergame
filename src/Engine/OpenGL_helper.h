@@ -136,6 +136,7 @@ namespace GLH
 	{
 		GLuint framebuf;
 		GLuint renderBuf;
+		GLuint depthBuf;
 		GLuint texture;
 		GLsizei width, height;
 	};
