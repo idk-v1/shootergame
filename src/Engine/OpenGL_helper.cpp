@@ -16,7 +16,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "buildinModels.h"
+#include "builtinModels.h"
 
 //https://www.reddit.com/r/opengl/comments/unc3fy/how_to_programatically_set_the_gpu_to_my_opengl/
 #ifdef _WIN32
@@ -297,8 +297,10 @@ void GLH::useTexture(GLuint texture, GLuint slot)
 	glBindTexture(GL_TEXTURE_2D, texture);
 }
 
-void GLH::setViewSize(size_t w, size_t h)
+void GLH::setViewSize(size_t w, size_t h, OGL_RenderBuffer& renderBuf)
 {
+	renderBuf.width = w;
+	renderBuf.height = h;
 	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 	screenW = w;
 	screenH = h;
@@ -725,4 +727,122 @@ void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f 
 	glFrontFace(GL_CCW);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
+}
+
+
+GLH::OGL_RenderBuffer GLH::createRenderBuffer(size_t width, size_t height, bool hasDepth)
+{
+	OGL_RenderBuffer buf = { 0 };
+
+	resizeRenderBuffer(buf, width, height, hasDepth);
+	
+	return buf;
+}
+
+void GLH::resizeRenderBuffer(OGL_RenderBuffer& buf, size_t width, size_t height, bool hasDepth)
+{
+	deleteRenderBuffer(buf);
+
+	buf.width = width;
+	buf.height = height;
+
+	glGenFramebuffers(1, &buf.framebuf);
+	glBindFramebuffer(GL_FRAMEBUFFER, buf.framebuf);
+
+	glGenTextures(1, &buf.texture);
+	glBindTexture(GL_TEXTURE_2D, buf.texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, buf.texture, 0);
+
+	glGenRenderbuffers(1, &buf.renderBuf);
+	glBindRenderbuffer(GL_RENDERBUFFER, buf.renderBuf);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buf.renderBuf);
+
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		puts("render buf not complete");
+		deleteRenderBuffer(buf);
+	}
+
+	glBindRenderbuffer(GL_FRAMEBUFFER, 0);
+}
+
+void GLH::drawRenderBuffer(const OGL_RenderBuffer& renderBuf)
+{
+	useShader(renderBufferShader);
+	useTexture(renderBuf.texture);
+	glBindVertexArray(screenModel.vao);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)screenModel.size);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+}
+
+void GLH::useRenderBuffer(const OGL_RenderBuffer& renderBuf)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, renderBuf.framebuf);
+	glViewport(0, 0, renderBuf.width, renderBuf.height);
+}
+
+GLH::OGL_RenderBuffer GLH::screenBuf = { 0 };
+
+void GLH::deleteRenderBuffer(OGL_RenderBuffer& renderBuf)
+{
+	glDeleteFramebuffers(1, &renderBuf.framebuf);
+	glDeleteRenderbuffers(1, &renderBuf.renderBuf);
+	memset(&renderBuf, 0, sizeof(OGL_RenderBuffer));
+}
+
+
+GLuint GLH::renderBufferShader = 0;
+
+
+void GLH::loadRenderBufferShader()
+{
+	const char* vert = 
+		"#version 330 core\n"
+		"layout(location = 0) in vec2 aPos;\n"
+		"out vec2 TexCoord;\n"
+		"void main()\n"
+		"{\n"
+		"	gl_Position = vec4(aPos, 0.f, 1.f);\n"
+		"	TexCoord = aPos * 0.5f + 0.5f;\n"
+		"}\n";
+
+	const char* frag = 
+		"#version 330 core\n"
+		"in vec2 TexCoord;\n"
+		"out vec4 FragColor;\n"
+		"uniform sampler2D renderedTexture;\n"
+		"void main()\n"
+		"{\n"
+		"	FragColor = texture(renderedTexture, TexCoord);\n"
+		"}\n";
+
+	renderBufferShader = loadShaderSrc(vert, frag);
+}
+
+
+GLH::OGL_Model GLH::screenModel = { 0 };
+
+void GLH::loadScreenModel()
+{
+	memset(&screenModel, 0, sizeof(OGL_Model));
+	screenModel.size = sizeof(screenVerticies) / sizeof(float);
+
+	glGenVertexArrays(1, &screenModel.vao);
+	glBindVertexArray(screenModel.vao);
+
+	glGenBuffers(1, &screenModel.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, screenModel.vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(screenVerticies), screenVerticies, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2f), (void*)0);
+	glEnableVertexAttribArray(0);
 }

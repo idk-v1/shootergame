@@ -44,9 +44,6 @@ namespace GLH
 	void unloadTexture(GLuint texture);
 	void useTexture(GLuint texture, GLuint slot = 0);
 
-	void setViewSize(size_t w, size_t h);
-	extern size_t screenW, screenH;
-
 	void clear(float r = 0.f, float g = 0.f, float b = 0.f);
 	void clearDepth();
 
@@ -134,6 +131,29 @@ namespace GLH
 	extern OGL_Model ballModel;
 	void loadBallModel();
 	void drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f move);
+
+	struct OGL_RenderBuffer
+	{
+		GLuint framebuf;
+		GLuint renderBuf;
+		GLuint texture;
+		GLsizei width, height;
+	};
+
+	extern OGL_RenderBuffer screenBuf;
+
+	OGL_RenderBuffer createRenderBuffer(size_t width, size_t height, bool hasDepth = true);
+	void resizeRenderBuffer(OGL_RenderBuffer& buf, size_t width, size_t height, bool hasDepth = true);
+	void drawRenderBuffer(const OGL_RenderBuffer& renderBuf);
+	void useRenderBuffer(const OGL_RenderBuffer& renderBuf);
+	void deleteRenderBuffer(OGL_RenderBuffer& renderBuf);
+	extern GLuint renderBufferShader;
+	void loadRenderBufferShader();
+	extern OGL_Model screenModel;
+	void loadScreenModel();
+
+	void setViewSize(size_t w, size_t h, OGL_RenderBuffer& renderBuf);
+	extern size_t screenW, screenH;
 }
 
 #endif
