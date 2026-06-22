@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClInclude Include="glad\include\glad\glad.h" />
     <ClInclude Include="glad\include\KHR\khrplatform.h" />
+    <ClInclude Include="src\Engine\buildinModels.h" />
     <ClInclude Include="src\Engine\Player.h" />
     <ClInclude Include="SDL3\include\SDL3\SDL.h" />
     <ClInclude Include="SDL3\include\SDL3\SDL_assert.h" />

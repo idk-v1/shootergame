@@ -37,28 +37,30 @@ int main()
 	glFrontFace(GL_CCW);
 	glEnable(GL_DEPTH_TEST);
 
+
 	GLuint shader = GLH::loadShader(path + "/src/Engine/shaders/main.vert", path + "/src/Engine/shaders/main.frag");
 	GLuint skyboxShader = GLH::loadShader(path + "/src/Engine/shaders/skybox.vert", path + "/src/Engine/shaders/skybox.frag");
 
 	GLuint skybox = GLH::loadSkybox(path + "/res/skybox.png");
+	GLuint skyboxTerrain = GLH::loadSkybox("res/skyboxTerrain.png");
 	GLH::loadCubeModel();
 
 
-	//GLH::OGL_Model carnoModel = GLH::loadModel("res/carno.obj", 0.02f);
-	//GLuint carnoTex = GLH::loadTexture("res/carno.png");
+	bool useFancyClouds = true;
+	GLuint cloudShader = 0;
+	if (useFancyClouds)
+	{
+		GLH::loadBallModel();
+		cloudShader = GLH::loadShader("src/Engine/shaders/cloudbox.vert", "src/Engine/shaders/cloudbox.frag");
+	}
+
 	GLH::OGL_Model pterModel = GLH::loadModel(path + "/res/pter.obj", 0.1f);
 	GLuint pterTex = GLH::loadTexture(path + "/res/pter.png");
-	//GLH::OGL_Model ankyModel = GLH::loadModel("res/anky.obj", 0.1f);
-	//GLuint ankyTex = GLH::loadTexture("res/anky.png");
-	//GLH::OGL_Model rhampModel = GLH::loadModel("res/rhamp.obj", 1.f);
-	//GLuint rhampTex = GLH::loadTexture("res/rhamp.png");
-
-	//GLH::OGL_Model sphere = GLH::loadModel("res/sphere.obj", 1.f / 0.695000827f * rhampModel.boundingRad);
-	//GLH::loadNoTexture();
-
+  
 	GLH::Entity player(GLH::Vec3f(0.f, 0.f, 0.f), GLH::Vec3f(0.f, 0.f, 0.f), 0.02f);
 	float lookSpeed = 0.1f;
 	float fov = 90.f;
+
 
 	Uint64 lastTime = SDL_GetTicks();
 	Uint64 deltaTime = 0;
@@ -66,10 +68,11 @@ int main()
 	Uint64 fpsCount = 0;
 	Uint64 ticks = 0;
 
+
 	GLH::useShader(shader);
 
-	GLH::addDirectionalLight(GLH::Vec3f(8.f, 0.4f, 0.2f), GLH::Vec3f(2.f, 3.f, 5.f).normalize(), 0.1f);
-	GLH::addAmbientLight(GLH::Vec3f(0.1f, 0.f, 0.f));
+	GLH::addDirectionalLight(GLH::Vec3f(0.8f, 0.7f, 0.7f), GLH::Vec3f(2.f, 1.f, 1.f).normalize(), 0.1f);
+	GLH::addAmbientLight(GLH::Vec3f(0.1f, 0.1f, 0.05f));
 
 
 	bool running = true;
@@ -139,12 +142,19 @@ int main()
 			}
 		}
 
-		//GLH::clear(250, 0, 0);
 		GLH::clearDepth();
 
 		GLH::useShader(skyboxShader);
 		GLH::drawSkybox(player.rot, fov, skybox);
+		
+		if (useFancyClouds)
+		{
+			GLH::useShader(cloudShader);
+			GLH::drawCloudBall(player.rot, 200.f, 225.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 30.f));
 
+			GLH::useShader(skyboxShader);
+			GLH::drawSkybox(player.rot, fov, skyboxTerrain);
+		}
 
 		GLH::useShader(shader);
 		GLH::updateCamera(player.pos, player.rot, fov);
@@ -153,54 +163,20 @@ int main()
 		int gridSize = 10;
 		size_t triCount = 0;
 
-		//GLH::useTexture(carnoTex);
-		//for (int x = -gridSize; x < gridSize; x += 2)
-		//	for (int z = -gridSize + 0; z < gridSize; z += 2)
-		//	{
-		//		GLH::drawModel(carnoModel,
-		//			GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-		//			GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, 0.f),
-		//			GLH::Vec3f(5.f, 5.f, 5.f));
-		//		triCount += carnoModel.size / 3;
-		//	}
-
-		GLH::useTexture(pterTex);
 		for (int x = -gridSize; x < gridSize; x += 6)
 			for (int y = -gridSize; y < gridSize; y += 4)
 				for (int z = -gridSize; z < gridSize; z += 4)
 				{
-					GLH::drawModel(pterModel,
+					GLH::drawModel(pterModel, pterTex,
 						GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
 						GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks)),
 						GLH::Vec3f(1.f, 1.f, 1.f));
 						triCount += pterModel.size / 3;
+
+						//GLH::drawModel(sphere, GLH::noTexture, GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
+						//	GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks)),
+						//	GLH::Vec3f(pterModel.boundingRad));
 				}
-
-		//GLH::useTexture(ankyTex);
-		//for (int x = -gridSize; x < gridSize; ++x)
-		//	for (int z = -gridSize + 2; z < gridSize; z += 4)
-		//		GLH::drawModel(ankyModel,
-		//			GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-		//			GLH::Vec3f(0.f, ((x + z) * 10.f + lastTime / 10.f), 0.f),
-		//			GLH::Vec3f(1.f, 1.f, 1.f));
-
-		//for (int x = -gridSize; x < gridSize; ++x)
-		//	for (int z = -gridSize + 0; z < gridSize; z += 1)
-		//	{
-		//		GLH::useTexture(rhampTex);
-		//		GLH::drawModel(rhampModel,
-		//			GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-		//			GLH::Vec3f(((x + z) * 10.f + lastTime / 10.f), 0.f, ((x + z) * 10.f + lastTime / 10.f)),
-		//			GLH::Vec3f(1.f, 1.f, 1.f));
-		//		triCount += rhampModel.size / 3;
-		//
-		//		//GLH::useTexture(GLH::noTexture);
-		//		//GLH::drawModel(sphere,
-		//		//	GLH::Vec3f(x * 10.f, 0.f, z * 10.f),
-		//		//	GLH::Vec3f(0.f, 0.f, 0.f),
-		//		//	GLH::Vec3f(1.f, 1.f, 1.f));
-		//		//triCount += sphere.size / 3;
-		//	}
 
 		SDL_GL_SwapWindow(window);
 		++fpsCount;
@@ -217,20 +193,21 @@ int main()
 
 	GLH::unloadShader(shader);
 
-	//GLH::unloadModel(carnoModel);
-	//GLH::unloadTexture(carnoTex);
 	GLH::unloadModel(pterModel);
 	GLH::unloadTexture(pterTex);
-	//GLH::unloadModel(ankyModel);
-	//GLH::unloadTexture(ankyTex);
-	//GLH::unloadModel(rhampModel);
-	//GLH::unloadTexture(rhampTex);
 
 	//GLH::unloadModel(sphere);
 	//GLH::unloadTexture(GLH::noTexture);
 
+	if (useFancyClouds)
+	{
+		GLH::unloadShader(cloudShader);
+		GLH::unloadModel(GLH::ballModel);
+	}
+
 	GLH::unloadShader(skyboxShader);
 	GLH::unloadTexture(skybox);
+	GLH::unloadTexture(skyboxTerrain);
 	GLH::unloadModel(GLH::cubeModel);
 
 	SDL_DestroyWindow(window);

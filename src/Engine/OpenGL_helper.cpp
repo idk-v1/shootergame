@@ -1,6 +1,12 @@
 #include "OpenGL_helper.h"
 #include "ObjReader.h"
 
+#define STBI_NO_PSD
+#define STBI_NO_TGA
+#define STBI_NO_GIF
+#define STBI_NO_HDR
+#define STBI_NO_PIC
+#define STBI_NO_PNM
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -9,6 +15,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+#include "buildinModels.h"
 
 //https://www.reddit.com/r/opengl/comments/unc3fy/how_to_programatically_set_the_gpu_to_my_opengl/
 #ifdef _WIN32
@@ -108,17 +116,26 @@ void GLH::useShader(GLuint shader)
 GLuint GLH::activeShader = 0;
 
 
-GLH::OGL_Model GLH::loadModel(const std::string& name, float scale)
+GLH::OGL_Model GLH::loadModel(const std::string& name, float scale, GLH::Vec3f offset)
 {
 	std::vector<GLH::Vertex> data = readObjFile(name);
 	if (scale != 1.f)
 	{
+		std::ofstream file(name.substr(0, name.size() - 4) + "OUT.obj");
+		GLH::Vec3f avg;
 		for (size_t i = 0; i < data.size(); ++i)
 		{
-			data[i].pos.x *= scale;
-			data[i].pos.y *= scale;
-			data[i].pos.z *= scale;
+			data[i].pos *= scale;
+			data[i].pos -= offset;
+			avg += data[i].pos;
+			file << data[i].pos.x << ", " << data[i].pos.y << ", " << data[i].pos.z << ",\n";
 		}
+		avg /= data.size();
+		float maxDist = 0.f;
+		for (size_t i = 0; i < data.size(); ++i)
+			maxDist = fmaxf(maxDist, (data[i].pos - avg).length());
+		file << "avg " << avg.x << " " << avg.y << " " << avg.z << " rad " << maxDist;
+		file.close();
 	}
 	return loadModel(data.data(), data.size());
 }
@@ -162,53 +179,20 @@ void GLH::unloadModel(OGL_Model& model)
 }
 
 
-bool sphereCollision(GLH::Vec3f aPos, GLH::Vec3f bPos, float aRad, float bRad)
+static bool sphereCollision(GLH::Vec3f aPos, GLH::Vec3f bPos, float aRad, float bRad)
 {
 	GLH::Vec3f diff = aPos - bPos;
 	float dist = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
 	return (dist < (aRad + bRad) * (aRad + bRad));
 }
 
-void GLH::drawModel(const OGL_Model& model, 
+void GLH::drawModel(const OGL_Model& model, GLuint texture,
 	const Vec3f& pos, const Vec3f& rot, const Vec3f& scale)
 {
 	Matrix4 mat;
 	float rx = toRad(rot.x);
 	float ry = toRad(rot.y);
 	float rz = toRad(rot.z);
-	//mat(0, 0) = scale.x;
-	//mat(1, 1) = scale.y;
-	//mat(2, 2) = scale.z;
-	//mat(0, 3) = pos.x;
-	//mat(1, 3) = pos.y;
-	//mat(2, 3) = pos.z;
-	//mat(3, 3) = 1.f;
-	
-	//Matrix4 rotMatX;
-	//rotMatX(0, 0) = 1.f;
-	//rotMatX(1, 1) = cosf(rx);
-	//rotMatX(2, 1) = -sinf(rx);
-	//rotMatX(1, 2) = sinf(rx);
-	//rotMatX(2, 2) = cosf(rx);
-	//rotMatX(3, 3) = 1.f;
-	
-	//Matrix4 rotMatY;
-	//rotMatY(0, 0) = cosf(ry);
-	//rotMatY(2, 0) = sinf(ry);
-	//rotMatY(1, 1) = 1.f;
-	//rotMatY(0, 2) = -sinf(ry);
-	//rotMatY(2, 2) = cosf(ry);
-	//rotMatY(3, 3) = 1.f;
-	
-	//Matrix4 rotMatZ;
-	//rotMatZ(0, 0) = cosf(rz);
-	//rotMatZ(1, 0) = -sinf(rz);
-	//rotMatZ(0, 1) = sinf(rz);
-	//rotMatZ(1, 1) = cosf(rz);
-	//rotMatZ(2, 2) = 1.f;
-	//rotMatZ(3, 3) = 1.f;
-	
-	//mat = mat * rotMatX * rotMatY * rotMatZ;
 
 	float ax = scale.x;
 	float ay = scale.y;
@@ -241,6 +225,8 @@ void GLH::drawModel(const OGL_Model& model,
 	setUniformMat4(activeShader, "modelMat", mat);
 	glBindVertexArray(model.vao);
 
+	GLH::useTexture(texture);
+
 
 	int lightStates[10] = { 0 }; // ceil(300 / 32) = 10
 	for (int i = 0; i < lightCount; ++i)
@@ -258,7 +244,7 @@ void GLH::drawModel(const OGL_Model& model,
 
 	glUniform1iv(glGetUniformLocation(activeShader, "lightStates"), 10, lightStates);
 
-	glDrawArrays(GL_TRIANGLES, 0, model.size);
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.size);
 }
 
 
@@ -296,7 +282,7 @@ GLuint GLH::loadTexture(uint8_t* data, size_t width, size_t height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)width, (GLsizei)height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	return texture;
@@ -315,7 +301,7 @@ void GLH::useTexture(GLuint texture, GLuint slot)
 
 void GLH::setViewSize(size_t w, size_t h)
 {
-	glViewport(0, 0, w, h);
+	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 	screenW = w;
 	screenH = h;
 }
@@ -516,51 +502,6 @@ GLH::OGL_Model GLH::cubeModel = { 0 };
 
 void GLH::loadCubeModel()
 {
-	float skyboxVertices[] = 
-	{
-	-1.0f,  1.0f, -1.0f,
-	-1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-
-	-1.0f, -1.0f,  1.0f,
-	-1.0f, -1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f,  1.0f,
-	-1.0f, -1.0f,  1.0f,
-
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-
-	-1.0f, -1.0f,  1.0f,
-	-1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f, -1.0f,  1.0f,
-	-1.0f, -1.0f,  1.0f,
-
-	-1.0f,  1.0f, -1.0f,
-	 1.0f,  1.0f, -1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	-1.0f,  1.0f,  1.0f,
-	-1.0f,  1.0f, -1.0f,
-
-	-1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f,  1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f,  1.0f,
-	 1.0f, -1.0f,  1.0f
-	};
-
 	memset(&cubeModel, 0, sizeof(OGL_Model));
 	cubeModel.size = sizeof(skyboxVertices) / sizeof(float) / 3;
 
@@ -584,7 +525,7 @@ GLuint GLH::loadSkybox(const std::string& name)
 	{
 		int cubeSize = height / 3;
 
-		stbi_uc* subData = (stbi_uc*)malloc(cubeSize * cubeSize * 4);
+		stbi_uc* subData = (stbi_uc*)malloc((size_t)cubeSize * cubeSize * 4);
 		if (subData)
 		{
 			int coords[] =
@@ -606,7 +547,7 @@ GLuint GLH::loadSkybox(const std::string& name)
 				{
 					int ox = cubeSize * coords[i * 2];
 					int oy = width * (coords[i * 2 + 1] * cubeSize + y);
-					memcpy(subData + cubeSize * 4 * y, data + (ox + oy) * 4, cubeSize * 4);
+					memcpy(subData + cubeSize * 4 * y, data + (ox + oy) * 4, cubeSize * 4ull);
 				}
 				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, cubeSize, cubeSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, subData);
 			}
@@ -675,6 +616,115 @@ void GLH::drawSkybox(Vec3f rot, float fov, GLuint texture)
 	glBindVertexArray(cubeModel.vao);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
 	glDisable(GL_DEPTH_TEST);
-	glDrawArrays(GL_TRIANGLES, 0, cubeModel.size);
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cubeModel.size);
+	glEnable(GL_DEPTH_TEST);
+}
+
+
+GLH::OGL_Model GLH::ballModel;
+
+
+void GLH::loadBallModel()
+{
+	// change later to non full model
+	// only needs verts
+	//ballModel = loadModel("res/sphere.obj", 1.f / 0.695000827f);
+
+	memset(&ballModel, 0, sizeof(OGL_Model));
+	ballModel.size = sizeof(ballModelVertices) / sizeof(float) / 3;
+
+	glGenVertexArrays(1, &ballModel.vao);
+	glBindVertexArray(ballModel.vao);
+
+	glGenBuffers(1, &ballModel.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, ballModel.vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(ballModelVertices), ballModelVertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vec3f), (void*)0);
+	glEnableVertexAttribArray(0);
+}
+
+void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f move)
+{
+	Matrix4 projMat = { 0 };
+	Matrix4 viewMat = { 0 };
+
+	float aspect = (float)screenW / (float)screenH;
+
+	float far = 1000.f;
+	float near = 0.01f;
+
+	projMat(0, 0) = 1.f / (aspect * tanf(toRad(fov) / 2.f));
+	projMat(1, 1) = 1.f / tanf(toRad(fov) / 2.f);
+	projMat(2, 2) = (far + near) / (near - far);
+	projMat(3, 2) = -1.f;
+	projMat(2, 3) = -(2.f * far * near) / (far - near);
+
+	Vec3f dir = Vec3f(
+		-sinf(toRad(rot.y)) * cosf(toRad(rot.x)),
+		sinf(toRad(rot.x)),
+		-cosf(toRad(rot.y)) * cosf(toRad(rot.x))
+	).normalize();
+	Vec3f right = dir.cross(Vec3f(0.f, 1.f, 0.f)).normalize();
+	Vec3f up = right.cross(dir);
+
+	Vec3f pos(0.f, height, 0.f);
+	viewMat(0, 0) = right.x;
+	viewMat(0, 1) = right.y;
+	viewMat(0, 2) = right.z;
+	viewMat(1, 0) = up.x;
+	viewMat(1, 1) = up.y;
+	viewMat(1, 2) = up.z;
+	viewMat(2, 0) = -dir.x;
+	viewMat(2, 1) = -dir.y;
+	viewMat(2, 2) = -dir.z;
+	viewMat(0, 3) = -right.dot(pos);
+	viewMat(1, 3) = -up.dot(pos);
+	viewMat(2, 3) = dir.dot(pos);
+	viewMat(3, 3) = 1.f;
+
+	Matrix4 mat;
+	float rx = toRad(wrapDeg(move.x));
+	float ry = toRad(wrapDeg(move.y));
+	float rz = toRad(wrapDeg(move.z));
+
+	float ax = radius;
+	float ay = radius;
+	float az = radius;
+	float ox = 0.f;
+	float oy = 0.f;
+	float oz = 0.f;
+	float cx = cosf(rx);
+	float cy = cosf(ry);
+	float cz = cosf(rz);
+	float sx = sinf(rx);
+	float sy = sinf(ry);
+	float sz = sinf(rz);
+	mat(0, 0) = ax * cy * cz;
+	mat(0, 1) = ax * cy * sz;
+	mat(0, 2) = -ax * sy;
+	mat(0, 3) = ox;
+	mat(1, 0) = az * sx * sy * cz - ay * cx * sz;
+	mat(1, 1) = az * sx * sy * sz + ay * cx * cz;
+	mat(1, 2) = az * sx * cy;
+	mat(1, 3) = oy;
+	mat(2, 0) = az * cx * sy * cz + az * sx * sz;
+	mat(2, 1) = az * cx * sy * sz - az * sx * cz;
+	mat(2, 2) = az * cx * cy;
+	mat(2, 3) = oz;
+	mat(3, 3) = 1.f;
+
+	setUniformMat4(activeShader, "projMat", projMat);
+	setUniformMat4(activeShader, "viewMat", viewMat);
+	setUniformMat4(activeShader, "modelMat", mat);
+
+	glFrontFace(GL_CW);
+	glEnable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBindVertexArray(ballModel.vao);
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)ballModel.size);
+	glFrontFace(GL_CCW);
+	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 }
