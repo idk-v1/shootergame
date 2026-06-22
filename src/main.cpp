@@ -2,7 +2,9 @@
 #include <glad/glad.h>
 #include <filesystem>
 #include <climits>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 #include "Engine/OpenGL_helper.h"
 #include "Engine/vectorMath.h"
@@ -222,7 +224,7 @@ int main()
 std::string getDir()
 {
 #ifdef __WIN32
-	char dir[MAX_PATH]
+	char dir[MAX_PATH];
 	GetModuleFileNameA(NULL, dir.data(), MAX_PATH);
 #else
 	char dir[PATH_MAX + 1];
