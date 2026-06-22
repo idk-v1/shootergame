@@ -1,5 +1,6 @@
 #include "ObjReader.h"
 
+#include <cstring>
 #include <fstream>
 
 size_t getFileSize(FILE* file)
@@ -145,7 +146,8 @@ std::vector<GLH::Vertex> readObjFile(const std::string& name)
 					GLH::Vec3f u = verts[verts.size() - 1 - 1].pos - verts[verts.size() - 1].pos;
 					GLH::Vec3f v = verts[verts.size() - 1 - 2].pos - verts[verts.size() - 1].pos;
 
-					GLH::Vec3f norm = u.cross(v).normalize();
+					GLH::Vec3f norm;
+					norm = u.cross(v).normalize();
 
 					verts[verts.size() - 1 - 0].norm = norm;
 					verts[verts.size() - 1 - 1].norm = norm;
