@@ -42,6 +42,8 @@ std::string GLH::loadTextFile(const std::string& name)
         ret = oss.str();
         file.close();
     }
+	else // Needed to be caught
+		throw std::runtime_error(std::string("Failed to open file ") + name);
 
     return ret;
 }

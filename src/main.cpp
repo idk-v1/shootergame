@@ -1,14 +1,25 @@
 #include <SDL3/SDL.h>
 #include <glad/glad.h>
+#include <filesystem>
+#include <climits>
+#include <unistd.h>
 
 #include "Engine/OpenGL_helper.h"
 #include "Engine/vectorMath.h"
 #include "Engine/Entity.h"
 #include "Engine/Player.h"
 
+std::string getDir();
 
 int main()
 {
+	// Linux needs an absolute path; cwd is not where the executable is,
+	// its the directory where the program was started,
+	// i.e. if I am @ /a/b/c/ and i do /foo/bar/shootergame.o
+	// then the CWD is /a/b/c/
+	std::string path = getDir();
+
+
 	SDL_Init(SDL_INIT_VIDEO);
 
 	SDL_Window* window = SDL_CreateWindow("Engine test", 600, 600, 
@@ -27,10 +38,10 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 
 
-	GLuint shader = GLH::loadShader("src/Engine/shaders/main.vert", "src/Engine/shaders/main.frag");
-	GLuint skyboxShader = GLH::loadShader("src/Engine/shaders/skybox.vert", "src/Engine/shaders/skybox.frag");
+	GLuint shader = GLH::loadShader(path + "/src/Engine/shaders/main.vert", path + "/src/Engine/shaders/main.frag");
+	GLuint skyboxShader = GLH::loadShader(path + "/src/Engine/shaders/skybox.vert", path + "/src/Engine/shaders/skybox.frag");
 
-	GLuint skybox = GLH::loadSkybox("res/skybox.png");
+	GLuint skybox = GLH::loadSkybox(path + "/res/skybox.png");
 	GLuint skyboxTerrain = GLH::loadSkybox("res/skyboxTerrain.png");
 	GLH::loadCubeModel();
 
@@ -43,12 +54,9 @@ int main()
 		cloudShader = GLH::loadShader("src/Engine/shaders/cloudbox.vert", "src/Engine/shaders/cloudbox.frag");
 	}
 
-	GLH::OGL_Model pterModel = GLH::loadModel("res/pter.obj", 0.1f);
-	GLuint pterTex = GLH::loadTexture("res/pter.png");
-
-	//GLH::OGL_Model sphere = GLH::loadModel("res/sphere.obj", 1.f / 0.0316395387f, GLH::Vec3f());
-
-
+	GLH::OGL_Model pterModel = GLH::loadModel(path + "/res/pter.obj", 0.1f);
+	GLuint pterTex = GLH::loadTexture(path + "/res/pter.png");
+  
 	GLH::Entity player(GLH::Vec3f(0.f, 0.f, 0.f), GLH::Vec3f(0.f, 0.f, 0.f), 0.02f);
 	float lookSpeed = 0.1f;
 	float fov = 90.f;
@@ -208,4 +216,19 @@ int main()
 	SDL_Quit();
 
 	return 0;
+}
+
+
+std::string getDir()
+{
+#ifdef __WIN32
+	char dir[MAX_PATH]
+	GetModuleFileNameA(NULL, dir.data(), MAX_PATH);
+#else
+	char dir[PATH_MAX + 1];
+	size_t count = readlink("/proc/self/exe", dir, PATH_MAX);
+	dir[count] = '\0';
+#endif
+
+	return std::filesystem::path(dir).parent_path().parent_path().string();
 }

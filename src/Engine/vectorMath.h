@@ -2,26 +2,7 @@
 #define VECTORMATH_H
 
 #include <math.h>
-
-#define VEC3FOP(op) \
-Vec3f& operator op=(const Vec3f& right) { \
-this->x op= right.x; \
-this->y op= right.y; \
-this->z op= right.z; \
-return *this; } \
-Vec3f& operator op=(float right) { \
-this->x op= right; \
-this->y op= right; \
-this->z op= right; \
-return *this; } \
-Vec3f operator op(const Vec3f& right) { \
-Vec3f ret = *this; \
-ret op= right; \
-return ret; } \
-Vec3f operator op(float right) { \
-Vec3f ret = *this; \
-ret op= right; \
-return ret; }
+#include <NPJ/Vector.h>
 
 namespace GLH
 {
@@ -72,49 +53,8 @@ namespace GLH
 			return(angle);
 	}
 
-	struct Vec3f
-	{
-		float x, y, z;
-
-		Vec3f() : x(0.f), y(0.f), z(0.f) {}
-		Vec3f(float x, float y, float z) : x(x), y(y), z(z) {}
-		Vec3f(float fill) : x(fill), y(fill), z(fill) {}
-
-		VEC3FOP(+);
-		VEC3FOP(-);
-		VEC3FOP(*);
-		VEC3FOP(/);
-		
-		Vec3f normalize()
-		{
-			float dist = fastSqrt(this->x*this->x + this->y*this->y + this->z*this->z);
-			return *this / dist;
-		}
-
-		float length()
-		{
-			return fastSqrt(x * x + y * y + z * z);
-		}
-
-		Vec3f cross(const Vec3f& right)
-		{
-			Vec3f vec = { 0 };
-			vec.x = this->y * right.z - this->z * right.y;
-			vec.y = this->z * right.x - this->x * right.z;
-			vec.z = this->x * right.y - this->y * right.x;
-			return vec;
-		}
-
-		float dot(const Vec3f& right)
-		{
-			return this->x * right.x + this->y * right.y + this->z * right.z;
-		}
-	};
-
-	struct Vec2f
-	{
-		float u, v;
-	};
+	using Vec3f = npj::Vector<float, 3>;
+	using Vec2f = npj::Vector<float, 2, npj::VectorSemantic::UV>;
 
 
 	static float toRad(float deg)
