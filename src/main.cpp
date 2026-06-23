@@ -4,6 +4,8 @@
 #include <climits>
 #ifndef _WIN32
 #include <unistd.h>
+#else
+#include <Windows.h>
 #endif
 
 #include "Engine/OpenGL_helper.h"
@@ -225,7 +227,7 @@ std::string getDir()
 {
 #ifdef _WIN32
 	char dir[MAX_PATH];
-	GetModuleFileNameA(NULL, dir.data(), MAX_PATH);
+	GetModuleFileNameA(NULL, dir, MAX_PATH);
 #else
 	char dir[PATH_MAX + 1];
 	size_t count = readlink("/proc/self/exe", dir, PATH_MAX);
