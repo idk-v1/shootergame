@@ -241,11 +241,11 @@ std::string getDir()
 #ifdef _WIN32
 	char dir[MAX_PATH];
 	GetModuleFileNameA(NULL, dir, MAX_PATH);
+	return std::filesystem::path(dir).parent_path().parent_path().parent_path().string();
 #else
 	char dir[PATH_MAX + 1];
 	size_t count = readlink("/proc/self/exe", dir, PATH_MAX);
 	dir[count] = '\0';
-#endif
-
 	return std::filesystem::path(dir).parent_path().parent_path().string();
+#endif
 }
