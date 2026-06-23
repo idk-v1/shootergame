@@ -218,7 +218,35 @@ void GLH::drawModel(const OGL_Model& model, GLuint texture,
 	mat(2, 3) = oz;
 	mat(3, 3) = 1.f;
 
+
 	// check if model bounding sphere should be culled
+	bool inView = false;
+	Vec3f relPos = pos - camPos;
+	Vec3f cornerPos[] =
+	{
+		{-1, -1, -1},
+		{+1, -1, -1},
+		{-1, +1, -1},
+		{+1, +1, -1},
+		{-1, -1, +1},
+		{+1, -1, +1},
+		{-1, +1, +1},
+		{+1, +1, +1}
+	};
+	for (int i = 0; i < 8; ++i)
+	{
+		Vec3f corner = relPos + (cornerPos[i] * model.boundingRad);
+		float lookDot = corner.normalize().dot(rotationToNormal(camRot.x, camRot.y));
+		if (lookDot > 1.f - camfov / 180.f)
+		{
+			inView = true;
+			break;
+		}
+	}
+
+	if (!inView)
+		return;
+
 
 	setUniformMat4(activeShader, "modelMat", mat);
 	glBindVertexArray(model.vao);
@@ -452,11 +480,18 @@ void GLH::removeLight(int index)
 	}
 }
 
+float GLH::camfov = 0.f;
+GLH::Vec3f GLH::camPos;
+GLH::Vec3f GLH::camRot;
 
 void GLH::updateCamera(Vec3f pos, Vec3f rot, float fov)
 {
 	Matrix4 projMat = { 0 };
 	Matrix4 viewMat = { 0 };
+
+	camfov = fov;
+	camPos = pos;
+	camRot = rot;
 
 	float aspect = (float)screenW / (float)screenH;
 

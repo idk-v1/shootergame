@@ -120,6 +120,9 @@ namespace GLH
 	extern bool lightStates[];
 	extern Light lights[];
 
+	extern float camfov;
+	extern Vec3f camPos;
+	extern Vec3f camRot;
 	void updateCamera(Vec3f pos, Vec3f rot, float fov);
 
 

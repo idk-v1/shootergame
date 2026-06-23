@@ -14,11 +14,11 @@ this->x op= right; \
 this->y op= right; \
 this->z op= right; \
 return *this; } \
-Vec3f operator op(const Vec3f& right) { \
+Vec3f operator op(const Vec3f& right) const { \
 Vec3f ret = *this; \
 ret op= right; \
 return ret; } \
-Vec3f operator op(float right) { \
+Vec3f operator op(float right) const { \
 Vec3f ret = *this; \
 ret op= right; \
 return ret; }
@@ -85,18 +85,18 @@ namespace GLH
 		VEC3FOP(*);
 		VEC3FOP(/);
 		
-		Vec3f normalize()
+		Vec3f normalize() const
 		{
 			float dist = fastSqrt(this->x*this->x + this->y*this->y + this->z*this->z);
 			return *this / dist;
 		}
 
-		float length()
+		float length() const
 		{
 			return fastSqrt(x * x + y * y + z * z);
 		}
 
-		Vec3f cross(const Vec3f& right)
+		Vec3f cross(const Vec3f& right) const
 		{
 			Vec3f vec = { 0 };
 			vec.x = this->y * right.z - this->z * right.y;
@@ -105,7 +105,7 @@ namespace GLH
 			return vec;
 		}
 
-		float dot(const Vec3f& right)
+		float dot(const Vec3f& right) const
 		{
 			return this->x * right.x + this->y * right.y + this->z * right.z;
 		}
@@ -143,6 +143,15 @@ namespace GLH
 	static float lerp(float x, float y, float mix)
 	{
 		return x * mix + y * (1.f - mix);
+	}
+
+	static Vec3f rotationToNormal(float x, float y)
+	{
+		return Vec3f(
+			-sinf(toRad(y)) * cosf(toRad(x)),
+			sinf(toRad(x)),
+			-cosf(toRad(y)) * cosf(toRad(x))
+		).normalize();
 	}
 }
 
