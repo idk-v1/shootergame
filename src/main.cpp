@@ -36,7 +36,7 @@ int main()
 	SDL_GL_SetSwapInterval(0); // 0 - free refresh / 1 - vsync
 	gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
 
-	GLH::setViewSize(800, 600);
+	GLH::setViewSize(800, 600, GLH::screenBuf);
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
 	glEnable(GL_DEPTH_TEST);
@@ -78,6 +78,10 @@ int main()
 	GLH::addDirectionalLight(GLH::Vec3f(0.8f, 0.7f, 0.7f), GLH::Vec3f(2.f, 1.f, 1.f).normalize(), 0.1f);
 	GLH::addAmbientLight(GLH::Vec3f(0.1f, 0.1f, 0.05f));
 
+	GLH::loadRenderBufferShader();
+	GLH::loadScreenModel();
+	GLH::OGL_RenderBuffer quarterResBuf = GLH::createRenderBuffer(GLH::screenBuf.width / 4, GLH::screenBuf.height / 4, false);
+
 
 	bool running = true;
 	bool paused = true;
@@ -96,7 +100,8 @@ int main()
 				break;
 
 			case SDL_EVENT_WINDOW_RESIZED:
-				GLH::setViewSize(event.window.data1, event.window.data2);
+				GLH::setViewSize(event.window.data1, event.window.data2, GLH::screenBuf);
+				GLH::resizeRenderBuffer(quarterResBuf, event.window.data1 / 4, event.window.data2 / 4);
 				break;
 
 			case SDL_EVENT_WINDOW_FOCUS_LOST:
@@ -146,15 +151,19 @@ int main()
 			}
 		}
 
+		GLH::useRenderBuffer(GLH::screenBuf);
 		GLH::clearDepth();
-
 		GLH::useShader(skyboxShader);
 		GLH::drawSkybox(player.rot, fov, skybox);
 		
 		if (useFancyClouds)
 		{
+			GLH::useRenderBuffer(quarterResBuf);
 			GLH::useShader(cloudShader);
 			GLH::drawCloudBall(player.rot, 200.f, 225.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 30.f));
+
+			GLH::useRenderBuffer(GLH::screenBuf);
+			GLH::drawRenderBuffer(quarterResBuf);
 
 			GLH::useShader(skyboxShader);
 			GLH::drawSkybox(player.rot, fov, skyboxTerrain);
@@ -213,6 +222,10 @@ int main()
 	GLH::unloadTexture(skybox);
 	GLH::unloadTexture(skyboxTerrain);
 	GLH::unloadModel(GLH::cubeModel);
+
+	GLH::deleteRenderBuffer(quarterResBuf);
+	GLH::unloadShader(GLH::renderBufferShader);
+	GLH::unloadModel(GLH::screenModel);
 
 	SDL_DestroyWindow(window);
 	SDL_GL_DestroyContext(glCtx);
