@@ -52,7 +52,7 @@ namespace GLH
 	void unloadTexture(GLuint texture);
 	void useTexture(GLuint texture, GLuint slot = 0);
 
-	void clear(float r = 0.f, float g = 0.f, float b = 0.f);
+	void clear(float r = 0.f, float g = 0.f, float b = 0.f, float a = 1.f);
 	void clearDepth();
 
 	struct Matrix4

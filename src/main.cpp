@@ -152,6 +152,7 @@ int main()
 			}
 		}
 
+		Uint64 renderTimeStart = SDL_GetTicksNS();
 		GLH::useRenderBuffer(GLH::screenBuf);
 		GLH::clearDepth();
 		GLH::useShader(skyboxShader);
@@ -160,6 +161,7 @@ int main()
 		if (useFancyClouds)
 		{
 			GLH::useRenderBuffer(quarterResBuf);
+			GLH::clear(0.f, 0.f, 0.f, 0.f);
 			GLH::useShader(cloudShader);
 			GLH::drawCloudBall(player.rot, 200.f, 225.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 30.f));
 
@@ -174,7 +176,7 @@ int main()
 		GLH::updateCamera(player.pos, player.rot, fov);
 
 
-		int gridSize = 10;
+		int gridSize = 50;
 		size_t triCount = 0;
 
 		for (int x = -gridSize; x < gridSize; x += 6)
@@ -191,13 +193,26 @@ int main()
 				}
 
 		SDL_GL_SwapWindow(window);
+		Uint64 renderTimeEnd = SDL_GetTicksNS();
 		++fpsCount;
 
 		if (nowTime - lastFPSTime >= 1000 / 4)
 		{
 			lastFPSTime = nowTime;
-			SDL_SetWindowTitle(window, ("FPS: " + std::to_string(fpsCount * 4) + " | " + 
-				std::to_string(triCount)).data());
+			
+			std::string triCountFmt = std::to_string(triCount);
+			for (int i = triCountFmt.size() - 3; i > 0; i -= 3)
+				triCountFmt.insert(i, 1, ',');
+
+			Uint64 renderMS = SDL_NS_TO_MS((renderTimeEnd - renderTimeStart) * 10);
+			std::string renderTime = (std::to_string(renderMS / 10) + '.') + (char)(renderMS % 10 + '0');
+
+			std::string title =
+				"FPS: " + std::to_string(fpsCount * 4) + " | " +
+				"Render MS: " + renderTime + " | " +
+				"Tri Count: " + triCountFmt;
+			SDL_SetWindowTitle(window, title.data());
+			
 			fpsCount = 0;
 		}
 		lastTime = nowTime;

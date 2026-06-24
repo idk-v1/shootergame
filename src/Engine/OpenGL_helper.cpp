@@ -380,9 +380,9 @@ void GLH::setViewSize(size_t w, size_t h, OGL_RenderBuffer& renderBuf)
 	screenH = h;
 }
 
-void GLH::clear(float r, float g, float b)
+void GLH::clear(float r, float g, float b, float a)
 {
-	glClearColor(r, g, b, 1.f);
+	glClearColor(r, g, b, a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
