@@ -141,27 +141,30 @@ GLH::OGL_Model GLH::loadModel(const std::string& name, float scale, GLH::Vec3f o
 GLH::OGL_Model GLH::loadModel(Vertex* verts, size_t length)
 {
 	OGL_Model model = { 0 };
-	model.size = length;
-
-	glGenVertexArrays(1, &model.vao);
-	glBindVertexArray(model.vao);
-
-	glGenBuffers(1, &model.vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, model.vbo);
-	glBufferData(GL_ARRAY_BUFFER, length * sizeof(Vertex), verts, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(Vec3f));
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vec3f)+sizeof(Vec2f)));
-	glEnableVertexAttribArray(2);
-
-	for (size_t i = 0; i < length; ++i)
+	if (length > 0)
 	{
-		float vecLen = verts[i].pos.length();
-		if (model.boundingRad < vecLen)
-			model.boundingRad = vecLen;
+		model.size = length;
+
+		glGenVertexArrays(1, &model.vao);
+		glBindVertexArray(model.vao);
+
+		glGenBuffers(1, &model.vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, model.vbo);
+		glBufferData(GL_ARRAY_BUFFER, length * sizeof(Vertex), verts, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(Vec3f));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vec3f) + sizeof(Vec2f)));
+		glEnableVertexAttribArray(2);
+
+		for (size_t i = 0; i < length; ++i)
+		{
+			float vecLen = verts[i].pos.length();
+			if (model.boundingRad < vecLen)
+				model.boundingRad = vecLen;
+		}
 	}
 
 	return model;
@@ -184,7 +187,7 @@ static bool sphereCollision(GLH::Vec3f aPos, GLH::Vec3f bPos, float aRad, float 
 	return (dist < (aRad + bRad) * (aRad + bRad));
 }
 
-void GLH::drawModel(const OGL_Model& model, GLuint texture,
+size_t GLH::drawModel(const OGL_Model& model, GLuint texture,
 	const Vec3f& pos, const Vec3f& rot, const Vec3f& scale)
 {
 	Matrix4 mat;
@@ -245,7 +248,7 @@ void GLH::drawModel(const OGL_Model& model, GLuint texture,
 	}
 
 	if (!inView)
-		return;
+		return 0;
 
 
 	setUniformMat4(activeShader, "modelMat", mat);
@@ -259,8 +262,7 @@ void GLH::drawModel(const OGL_Model& model, GLuint texture,
 	{
 		if (lights[i].type == 3 || lights[i].type == 4)
 		{
-			float maxScale = fmaxf(sx, fmaxf(sy, sz));
-			if (sphereCollision(pos, lights[i].pos, model.boundingRad * maxScale, lights[i].str))
+			if (sphereCollision(pos, lights[i].pos, model.boundingRad * scale.max(), lights[i].str))
 				lightStates[i >> 5] |= 1 << (i & 31);
 		}
 		else if (lights[i].type == 0);
@@ -271,6 +273,49 @@ void GLH::drawModel(const OGL_Model& model, GLuint texture,
 	glUniform1iv(glGetUniformLocation(activeShader, "lightStates"), 10, lightStates);
 
 	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.size);
+	return model.size;
+}
+
+std::vector<GLH::OGL_Model> GLH::loadModelLOD(const std::string& name, int count, float scale, GLH::Vec3f offset)
+{
+	std::vector<OGL_Model> models;
+
+	for (int i = 0; i < count; ++i)
+	{
+		std::string nameNum = name + ".LOD" + std::to_string(i) + ".obj";
+		OGL_Model model = loadModel(nameNum, scale, offset);
+		if (model.size)
+			models.push_back(model);
+		else
+			break;
+	}
+
+	return models;
+}
+
+void GLH::unloadModelLOD(std::vector<OGL_Model>& models)
+{
+	for (int i = 0; i < models.size(); ++i)
+		unloadModel(models[i]);
+	models.clear();
+}
+
+size_t GLH::drawModelLOD(const std::vector<OGL_Model>& models, GLuint texture, const Vec3f& pos, const Vec3f& rot, const Vec3f& scale)
+{
+	if (models.size() == 0)
+		return 0;
+	// get closest point for level of detail
+	// its better to have it look better far away than to look terrible close up
+	// worst case: this does nothing
+	float closeDist = fmaxf(Vec3f(pos - camPos).length() - models[0].boundingRad * scale.max(), 0.f);
+	
+	// probably going to be magic constants here
+	// should include FOV
+	// may need tweaking
+	int index = clampf(0, logf(camfov / 180.f / 2.f * closeDist), models.size() - 1);
+	//setUniformInt(activeShader, "lod", index);
+
+	return drawModel(models[index], texture, pos, rot, scale);
 }
 
 

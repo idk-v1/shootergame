@@ -109,6 +109,16 @@ namespace GLH
 		{
 			return this->x * right.x + this->y * right.y + this->z * right.z;
 		}
+
+		float max() const
+		{
+			return fmaxf(x, fmaxf(y, z));
+		}
+
+		float min() const
+		{
+			return fminf(x, fminf(y, z));
+		}
 	};
 
 	struct Vec2f
