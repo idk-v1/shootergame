@@ -172,14 +172,9 @@ int main()
 					triCount += GLH::drawModelLOD(pterModel, pterTex,
 						GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
 						GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks))) / 3;
-					//GLH::drawModel(pterModel, pterTex,
+					//triCount += GLH::drawModel(pterModel, pterTex,
 					//	GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
-					//	GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks)));
-						//triCount += pterModel.size / 3;
-
-						//GLH::drawModel(sphere, GLH::noTexture, GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
-						//	GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks)),
-						//	GLH::Vec3f(pterModel.boundingRad));
+					//	GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks))) / 3;
 				}
 
 		SDL_GL_SwapWindow(window);
