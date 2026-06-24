@@ -80,6 +80,8 @@ namespace npj
         Vector& normalize(const T& len = -1);
         Vector  lerp(const Vector& other, T ratio) const;
         Vector  cross(const Vector& other) const requires (S == 3);
+        T       maxValue() const;
+        T       minValue() const;
         
         static Vector  zero();
     };
@@ -98,6 +100,8 @@ namespace npj
     VEC_TMPL VEC_TYPE  lateral  (const VEC_TYPE &vec, const VEC_TYPE &dir, const bool dirNormalized = false);
     VEC_TMPL VEC_TYPE  lerp     (const VEC_TYPE &a, const VEC_TYPE &b, T ratio);
     VEC_TMPL VEC_TYPE  cross    (const VEC_TYPE &a, const VEC_TYPE &v) requires (S == 3);
+    VEC_TMPL T maxValue(const VEC_TYPE& a);
+    VEC_TMPL T minValue(const VEC_TYPE& a);
     
 }
 
@@ -322,6 +326,32 @@ VEC_TYPE npj::lerp(const VEC_TYPE &a, const VEC_TYPE &b, T ratio)
 {
     return a.lerp(b, ratio);
 }
+
+VEC_TMPL
+T VEC_TYPE::maxValue() const
+{
+    T ret = (*this)[0];
+    for (size_t i = 1; i < S; ++i)
+        if ((*this)[i] > ret)
+            ret = (*this)[i];
+    return ret;
+}
+
+VEC_TMPL
+T VEC_TYPE::minValue() const
+{
+    T ret = (*this)[0];
+    for (size_t i = 1; i < S; ++i)
+        if ((*this)[i] < ret)
+            ret = (*this)[i];
+    return ret;
+}
+
+VEC_TMPL T npj::maxValue(const VEC_TYPE& a)
+{ return a.maxValue(); }
+
+VEC_TMPL T npj::minValue(const VEC_TYPE& a)
+{ return a.minValue(); }
 
 
 #undef VEC_TEMPL

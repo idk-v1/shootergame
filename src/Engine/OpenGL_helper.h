@@ -34,8 +34,16 @@ namespace GLH
 	OGL_Model loadModel(const std::string& name, float scale = 1.f, GLH::Vec3f offset = GLH::Vec3f(0.f, 0.f, 0.f));
 	OGL_Model loadModel(Vertex* verts, size_t length);
 	void unloadModel(OGL_Model& model);
-	void drawModel(const OGL_Model& model, GLuint texture, const Vec3f& pos = {0.f, 0.f, 0.f},
+	size_t drawModel(const OGL_Model& model, GLuint texture, const Vec3f& pos = {0.f, 0.f, 0.f},
 		const Vec3f& rot = {0.f, 0.f, 0.f}, const Vec3f& scale = { 1.f, 1.f, 1.f });
+
+	// gen models from here: https://low-poly.com/tools/lod
+	// site above strips textures. need to find better
+	std::vector<OGL_Model> loadModelLOD(const std::string& name, int count, float scale = 1.f, GLH::Vec3f offset = GLH::Vec3f(0.f, 0.f, 0.f));
+	void unloadModelLOD(std::vector<OGL_Model>& models);
+	size_t drawModelLOD(const std::vector<OGL_Model>& models, GLuint texture, const Vec3f& pos = { 0.f, 0.f, 0.f },
+		const Vec3f& rot = { 0.f, 0.f, 0.f }, const Vec3f& scale = { 1.f, 1.f, 1.f });
+
 
 	GLuint loadTexture(const std::string& name);
 	GLuint loadTexture(uint8_t* data, size_t width, size_t height);
@@ -120,6 +128,9 @@ namespace GLH
 	extern bool lightStates[];
 	extern Light lights[];
 
+	extern float camfov;
+	extern Vec3f camPos;
+	extern Vec3f camRot;
 	void updateCamera(Vec3f pos, Vec3f rot, float fov);
 
 

@@ -84,6 +84,15 @@ namespace GLH
 	{
 		return x * mix + y * (1.f - mix);
 	}
+
+	static Vec3f rotationToNormal(float x, float y)
+	{
+		return Vec3f(
+			-sinf(toRad(y)) * cosf(toRad(x)),
+			sinf(toRad(x)),
+			-cosf(toRad(y)) * cosf(toRad(x))
+		).normalize();
+	}
 }
 
 #endif

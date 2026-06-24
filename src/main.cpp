@@ -58,7 +58,8 @@ int main()
 		cloudShader = GLH::loadShader("src/Engine/shaders/cloudbox.vert", "src/Engine/shaders/cloudbox.frag");
 	}
 
-	GLH::OGL_Model pterModel = GLH::loadModel(path + "/res/pter.obj", 0.1f);
+	//GLH::OGL_Model pterModel = GLH::loadModel(path + "/res/pter.obj", 0.1f);
+	std::vector<GLH::OGL_Model> pterModel = GLH::loadModelLOD(path + "/res/pter", 4, 0.1f);
 	GLuint pterTex = GLH::loadTexture(path + "/res/pter.png");
   
 	GLH::Entity player(GLH::Vec3f(0.f, 0.f, 0.f), GLH::Vec3f(0.f, 0.f, 0.f), 0.02f);
@@ -180,15 +181,13 @@ int main()
 			for (int y = -gridSize; y < gridSize; y += 4)
 				for (int z = -gridSize; z < gridSize; z += 4)
 				{
-					GLH::drawModel(pterModel, pterTex,
+					triCount += GLH::drawModelLOD(pterModel, pterTex,
 						GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
-						GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks)),
-						GLH::Vec3f(1.f, 1.f, 1.f));
-						triCount += pterModel.size / 3;
+						GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks))) / 3;
 
-						//GLH::drawModel(sphere, GLH::noTexture, GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
-						//	GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks)),
-						//	GLH::Vec3f(pterModel.boundingRad));
+					//triCount += GLH::drawModel(pterModel, pterTex,
+					//	GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
+					//	GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks))) / 3;
 				}
 
 		SDL_GL_SwapWindow(window);
@@ -206,7 +205,8 @@ int main()
 
 	GLH::unloadShader(shader);
 
-	GLH::unloadModel(pterModel);
+	//GLH::unloadModel(pterModel);
+	GLH::unloadModelLOD(pterModel);
 	GLH::unloadTexture(pterTex);
 
 	//GLH::unloadModel(sphere);
