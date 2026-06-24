@@ -119,21 +119,21 @@ GLH::OGL_Model GLH::loadModel(const std::string& name, float scale, GLH::Vec3f o
 	std::vector<GLH::Vertex> data = readObjFile(name);
 	if (scale != 1.f)
 	{
-		std::ofstream file(name.substr(0, name.size() - 4) + "OUT.obj");
-		GLH::Vec3f avg;
+		//std::ofstream file(name.substr(0, name.size() - 4) + "OUT.obj");
+		//GLH::Vec3f avg;
 		for (size_t i = 0; i < data.size(); ++i)
 		{
 			data[i].pos *= scale;
 			data[i].pos -= offset;
-			avg += data[i].pos;
-			file << data[i].pos.x << ", " << data[i].pos.y << ", " << data[i].pos.z << ",\n";
+			//avg += data[i].pos;
+			//file << data[i].pos.x << ", " << data[i].pos.y << ", " << data[i].pos.z << ",\n";
 		}
-		avg /= data.size();
-		float maxDist = 0.f;
-		for (size_t i = 0; i < data.size(); ++i)
-			maxDist = fmaxf(maxDist, (data[i].pos - avg).length());
-		file << "avg " << avg.x << " " << avg.y << " " << avg.z << " rad " << maxDist;
-		file.close();
+		//avg /= data.size();
+		//float maxDist = 0.f;
+		//for (size_t i = 0; i < data.size(); ++i)
+		//	maxDist = fmaxf(maxDist, (data[i].pos - avg).length());
+		//file << "avg " << avg.x << " " << avg.y << " " << avg.z << " rad " << maxDist;
+		//file.close();
 	}
 	return loadModel(data.data(), data.size());
 }
