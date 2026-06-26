@@ -263,7 +263,7 @@ size_t GLH::drawModel(const OGL_Model& model, GLuint texture,
 	{
 		if (lights[i].type == 3 || lights[i].type == 4)
 		{
-			if (sphereCollision(pos, lights[i].pos, model.boundingRad * scale.maxValue(), lights[i].str))
+			if (sphereCollision(pos, lights[i].pos, model.boundingRad * scale.max(), lights[i].str))
 				lightStates[i >> 5] |= 1 << (i & 31);
 		}
 		else if (lights[i].type == 0);
@@ -308,7 +308,7 @@ size_t GLH::drawModelLOD(const std::vector<OGL_Model>& models, GLuint texture, c
 	// get closest point for level of detail
 	// its better to have it look better far away than to look terrible close up
 	// worst case: this does nothing
-	float closeDist = fmaxf(Vec3f(pos - camPos).length() - models[0].boundingRad * scale.maxValue(), 0.f);
+	float closeDist = fmaxf(Vec3f(pos - camPos).length() - models[0].boundingRad * scale.max(), 0.f);
 
 	// probably going to be magic constants here
 	// should include FOV
