@@ -2,7 +2,11 @@
 #include <glad/glad.h>
 #include <filesystem>
 #include <climits>
+#ifndef _WIN32
 #include <unistd.h>
+#else
+#include <Windows.h>
+#endif
 
 #include "Engine/OpenGL_helper.h"
 #include "Engine/vectorMath.h"
@@ -32,7 +36,7 @@ int main()
 	SDL_GL_SetSwapInterval(0); // 0 - free refresh / 1 - vsync
 	gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
 
-	GLH::setViewSize(800, 600);
+	GLH::setViewSize(800, 600, GLH::screenBuf);
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
 	glEnable(GL_DEPTH_TEST);
@@ -54,7 +58,8 @@ int main()
 		cloudShader = GLH::loadShader(path + "/src/Engine/shaders/cloudbox.vert", path + "/src/Engine/shaders/cloudbox.frag");
 	}
 
-	GLH::OGL_Model pterModel = GLH::loadModel(path + "/res/pter.obj", 0.1f);
+	//GLH::OGL_Model pterModel = GLH::loadModel(path + "/res/pter.obj", 0.1f);
+	std::vector<GLH::OGL_Model> pterModel = GLH::loadModelLOD(path + "/res/pter", 4, 0.1f);
 	GLuint pterTex = GLH::loadTexture(path + "/res/pter.png");
   
 	GLH::Entity player(GLH::Vec3f(0.f, 0.f, 0.f), GLH::Vec3f(0.f, 0.f, 0.f), 0.02f);
@@ -74,6 +79,10 @@ int main()
 	GLH::addDirectionalLight(GLH::Vec3f(0.8f, 0.7f, 0.7f), GLH::Vec3f(2.f, 1.f, 1.f).normalize(), 0.1f);
 	GLH::addAmbientLight(GLH::Vec3f(0.1f, 0.1f, 0.05f));
 
+	GLH::loadRenderBufferShader();
+	GLH::loadScreenModel();
+	GLH::OGL_RenderBuffer quarterResBuf = GLH::createRenderBuffer(GLH::screenBuf.width / 4, GLH::screenBuf.height / 4, false);
+
 
 	bool running = true;
 	bool paused = true;
@@ -92,7 +101,8 @@ int main()
 				break;
 
 			case SDL_EVENT_WINDOW_RESIZED:
-				GLH::setViewSize(event.window.data1, event.window.data2);
+				GLH::setViewSize(event.window.data1, event.window.data2, GLH::screenBuf);
+				GLH::resizeRenderBuffer(quarterResBuf, event.window.data1 / 4, event.window.data2 / 4);
 				break;
 
 			case SDL_EVENT_WINDOW_FOCUS_LOST:
@@ -142,15 +152,21 @@ int main()
 			}
 		}
 
+		Uint64 renderTimeStart = SDL_GetTicksNS();
+		GLH::useRenderBuffer(GLH::screenBuf);
 		GLH::clearDepth();
-
 		GLH::useShader(skyboxShader);
 		GLH::drawSkybox(player.rot, fov, skybox);
 		
 		if (useFancyClouds)
 		{
+			GLH::useRenderBuffer(quarterResBuf);
+			GLH::clear(0.f, 0.f, 0.f, 0.f);
 			GLH::useShader(cloudShader);
 			GLH::drawCloudBall(player.rot, 200.f, 225.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 30.f));
+
+			GLH::useRenderBuffer(GLH::screenBuf);
+			GLH::drawRenderBuffer(quarterResBuf);
 
 			GLH::useShader(skyboxShader);
 			GLH::drawSkybox(player.rot, fov, skyboxTerrain);
@@ -160,32 +176,43 @@ int main()
 		GLH::updateCamera(player.pos, player.rot, fov);
 
 
-		int gridSize = 10;
+		int gridSize = 50;
 		size_t triCount = 0;
 
 		for (int x = -gridSize; x < gridSize; x += 6)
 			for (int y = -gridSize; y < gridSize; y += 4)
 				for (int z = -gridSize; z < gridSize; z += 4)
 				{
-					GLH::drawModel(pterModel, pterTex,
+					triCount += GLH::drawModelLOD(pterModel, pterTex,
 						GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
-						GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks)),
-						GLH::Vec3f(1.f, 1.f, 1.f));
-						triCount += pterModel.size / 3;
+						GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks))) / 3;
 
-						//GLH::drawModel(sphere, GLH::noTexture, GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
-						//	GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks)),
-						//	GLH::Vec3f(pterModel.boundingRad));
+					//triCount += GLH::drawModel(pterModel, pterTex,
+					//	GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
+					//	GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks))) / 3;
 				}
 
 		SDL_GL_SwapWindow(window);
+		Uint64 renderTimeEnd = SDL_GetTicksNS();
 		++fpsCount;
 
 		if (nowTime - lastFPSTime >= 1000 / 4)
 		{
 			lastFPSTime = nowTime;
-			SDL_SetWindowTitle(window, ("FPS: " + std::to_string(fpsCount * 4) + " | " + 
-				std::to_string(triCount)).data());
+			
+			std::string triCountFmt = std::to_string(triCount);
+			for (int i = triCountFmt.size() - 3; i > 0; i -= 3)
+				triCountFmt.insert(i, 1, ',');
+
+			Uint64 renderMS = SDL_NS_TO_MS((renderTimeEnd - renderTimeStart) * 10);
+			std::string renderTime = (std::to_string(renderMS / 10) + '.') + (char)(renderMS % 10 + '0');
+
+			std::string title =
+				"FPS: " + std::to_string(fpsCount * 4) + " | " +
+				"Render MS: " + renderTime + " | " +
+				"Tri Count: " + triCountFmt;
+			SDL_SetWindowTitle(window, title.data());
+			
 			fpsCount = 0;
 		}
 		lastTime = nowTime;
@@ -193,7 +220,8 @@ int main()
 
 	GLH::unloadShader(shader);
 
-	GLH::unloadModel(pterModel);
+	//GLH::unloadModel(pterModel);
+	GLH::unloadModelLOD(pterModel);
 	GLH::unloadTexture(pterTex);
 
 	//GLH::unloadModel(sphere);
@@ -210,6 +238,10 @@ int main()
 	GLH::unloadTexture(skyboxTerrain);
 	GLH::unloadModel(GLH::cubeModel);
 
+	GLH::deleteRenderBuffer(quarterResBuf);
+	GLH::unloadShader(GLH::renderBufferShader);
+	GLH::unloadModel(GLH::screenModel);
+
 	SDL_DestroyWindow(window);
 	SDL_GL_DestroyContext(glCtx);
 
@@ -221,14 +253,14 @@ int main()
 
 std::string getDir()
 {
-#ifdef __WIN32
-	char dir[MAX_PATH]
-	GetModuleFileNameA(NULL, dir.data(), MAX_PATH);
+#ifdef _WIN32
+	char dir[MAX_PATH];
+	GetModuleFileNameA(NULL, dir, MAX_PATH);
+	return std::filesystem::path(dir).parent_path().parent_path().parent_path().string();
 #else
 	char dir[PATH_MAX + 1];
 	size_t count = readlink("/proc/self/exe", dir, PATH_MAX);
 	dir[count] = '\0';
-#endif
-
 	return std::filesystem::path(dir).parent_path().parent_path().string();
+#endif
 }

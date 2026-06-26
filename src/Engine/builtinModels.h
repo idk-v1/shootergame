@@ -2,6 +2,16 @@
 #ifndef BUILTIN_MODELS_H
 #define BUILTIN_MODELS_H
 
+float screenVerticies[] =
+{
+   -1.0f, -1.0f,
+    1.0f, -1.0f,
+   -1.0f,  1.0f,
+   -1.0f,  1.0f,
+    1.0f, -1.0f,
+    1.0f,  1.0f
+};
+
 float skyboxVertices[] =
 {
 -1.0f,  1.0f, -1.0f,

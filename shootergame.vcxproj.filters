@@ -317,7 +317,7 @@
     <ClInclude Include="src\Engine\Player.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Engine\buildinModels.h">
+    <ClInclude Include="src\Engine\builtinModels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

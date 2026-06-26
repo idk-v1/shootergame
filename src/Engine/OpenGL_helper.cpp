@@ -16,7 +16,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "buildinModels.h"
+#include "builtinModels.h"
 
 //https://www.reddit.com/r/opengl/comments/unc3fy/how_to_programatically_set_the_gpu_to_my_opengl/
 #ifdef _WIN32
@@ -121,21 +121,21 @@ GLH::OGL_Model GLH::loadModel(const std::string& name, float scale, GLH::Vec3f o
 	std::vector<GLH::Vertex> data = readObjFile(name);
 	if (scale != 1.f)
 	{
-		std::ofstream file(name.substr(0, name.size() - 4) + "OUT.obj");
-		GLH::Vec3f avg;
+		//std::ofstream file(name.substr(0, name.size() - 4) + "OUT.obj");
+		//GLH::Vec3f avg;
 		for (size_t i = 0; i < data.size(); ++i)
 		{
 			data[i].pos *= scale;
 			data[i].pos -= offset;
-			avg += data[i].pos;
-			file << data[i].pos.x << ", " << data[i].pos.y << ", " << data[i].pos.z << ",\n";
+			//avg += data[i].pos;
+			//file << data[i].pos.x << ", " << data[i].pos.y << ", " << data[i].pos.z << ",\n";
 		}
-		avg /= data.size();
-		float maxDist = 0.f;
-		for (size_t i = 0; i < data.size(); ++i)
-			maxDist = fmaxf(maxDist, (data[i].pos - avg).length());
-		file << "avg " << avg.x << " " << avg.y << " " << avg.z << " rad " << maxDist;
-		file.close();
+		//avg /= data.size();
+		//float maxDist = 0.f;
+		//for (size_t i = 0; i < data.size(); ++i)
+		//	maxDist = fmaxf(maxDist, (data[i].pos - avg).length());
+		//file << "avg " << avg.x << " " << avg.y << " " << avg.z << " rad " << maxDist;
+		//file.close();
 	}
 	return loadModel(data.data(), data.size());
 }
@@ -143,27 +143,30 @@ GLH::OGL_Model GLH::loadModel(const std::string& name, float scale, GLH::Vec3f o
 GLH::OGL_Model GLH::loadModel(Vertex* verts, size_t length)
 {
 	OGL_Model model = { 0 };
-	model.size = length;
-
-	glGenVertexArrays(1, &model.vao);
-	glBindVertexArray(model.vao);
-
-	glGenBuffers(1, &model.vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, model.vbo);
-	glBufferData(GL_ARRAY_BUFFER, length * sizeof(Vertex), verts, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(Vec3f));
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vec3f)+sizeof(Vec2f)));
-	glEnableVertexAttribArray(2);
-
-	for (size_t i = 0; i < length; ++i)
+	if (length > 0)
 	{
-		float vecLen = verts[i].pos.length();
-		if (model.boundingRad < vecLen)
-			model.boundingRad = vecLen;
+		model.size = length;
+
+		glGenVertexArrays(1, &model.vao);
+		glBindVertexArray(model.vao);
+
+		glGenBuffers(1, &model.vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, model.vbo);
+		glBufferData(GL_ARRAY_BUFFER, length * sizeof(Vertex), verts, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(Vec3f));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vec3f) + sizeof(Vec2f)));
+		glEnableVertexAttribArray(2);
+
+		for (size_t i = 0; i < length; ++i)
+		{
+			float vecLen = verts[i].pos.length();
+			if (model.boundingRad < vecLen)
+				model.boundingRad = vecLen;
+		}
 	}
 
 	return model;
@@ -186,7 +189,7 @@ static bool sphereCollision(GLH::Vec3f aPos, GLH::Vec3f bPos, float aRad, float 
 	return (dist < (aRad + bRad) * (aRad + bRad));
 }
 
-void GLH::drawModel(const OGL_Model& model, GLuint texture,
+size_t GLH::drawModel(const OGL_Model& model, GLuint texture,
 	const Vec3f& pos, const Vec3f& rot, const Vec3f& scale)
 {
 	Matrix4 mat;
@@ -221,6 +224,33 @@ void GLH::drawModel(const OGL_Model& model, GLuint texture,
 	mat(3, 3) = 1.f;
 
 	// check if model bounding sphere should be culled
+	bool inView = false;
+	Vec3f relPos = pos - camPos;
+	Vec3f cornerPos[] =
+	{
+		{-1, -1, -1},
+		{+1, -1, -1},
+		{-1, +1, -1},
+		{+1, +1, -1},
+		{-1, -1, +1},
+		{+1, -1, +1},
+		{-1, +1, +1},
+		{+1, +1, +1}
+	};
+	for (int i = 0; i < 8; ++i)
+	{
+		Vec3f corner = relPos + (cornerPos[i] * model.boundingRad);
+		float lookDot = corner.normalize().dot(rotationToNormal(camRot.x, camRot.y));
+		if (lookDot > 1.f - camfov / 180.f)
+		{
+			inView = true;
+			break;
+		}
+	}
+
+	if (!inView)
+		return 0;
+
 
 	setUniformMat4(activeShader, "modelMat", mat);
 	glBindVertexArray(model.vao);
@@ -233,8 +263,7 @@ void GLH::drawModel(const OGL_Model& model, GLuint texture,
 	{
 		if (lights[i].type == 3 || lights[i].type == 4)
 		{
-			float maxScale = fmaxf(sx, fmaxf(sy, sz));
-			if (sphereCollision(pos, lights[i].pos, model.boundingRad * maxScale, lights[i].str))
+			if (sphereCollision(pos, lights[i].pos, model.boundingRad * scale.maxValue(), lights[i].str))
 				lightStates[i >> 5] |= 1 << (i & 31);
 		}
 		else if (lights[i].type == 0);
@@ -245,6 +274,49 @@ void GLH::drawModel(const OGL_Model& model, GLuint texture,
 	glUniform1iv(glGetUniformLocation(activeShader, "lightStates"), 10, lightStates);
 
 	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)model.size);
+	return model.size;
+}
+
+std::vector<GLH::OGL_Model> GLH::loadModelLOD(const std::string& name, int count, float scale, GLH::Vec3f offset)
+{
+	std::vector<OGL_Model> models;
+
+	for (int i = 0; i < count; ++i)
+	{
+		std::string nameNum = name + ".LOD" + std::to_string(i) + ".obj";
+		OGL_Model model = loadModel(nameNum, scale, offset);
+		if (model.size)
+			models.push_back(model);
+		else
+			break;
+	}
+
+	return models;
+}
+
+void GLH::unloadModelLOD(std::vector<OGL_Model>& models)
+{
+	for (int i = 0; i < models.size(); ++i)
+		unloadModel(models[i]);
+	models.clear();
+}
+
+size_t GLH::drawModelLOD(const std::vector<OGL_Model>& models, GLuint texture, const Vec3f& pos, const Vec3f& rot, const Vec3f& scale)
+{
+	if (models.size() == 0)
+		return 0;
+	// get closest point for level of detail
+	// its better to have it look better far away than to look terrible close up
+	// worst case: this does nothing
+	float closeDist = fmaxf(Vec3f(pos - camPos).length() - models[0].boundingRad * scale.maxValue(), 0.f);
+
+	// probably going to be magic constants here
+	// should include FOV
+	// may need tweaking
+	int index = clampf(0, logf(camfov / 180.f / 2.f * closeDist), models.size() - 1);
+	//setUniformInt(activeShader, "lod", index);
+
+	return drawModel(models[index], texture, pos, rot, scale);
 }
 
 
@@ -299,16 +371,18 @@ void GLH::useTexture(GLuint texture, GLuint slot)
 	glBindTexture(GL_TEXTURE_2D, texture);
 }
 
-void GLH::setViewSize(size_t w, size_t h)
+void GLH::setViewSize(size_t w, size_t h, OGL_RenderBuffer& renderBuf)
 {
+	renderBuf.width = w;
+	renderBuf.height = h;
 	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 	screenW = w;
 	screenH = h;
 }
 
-void GLH::clear(float r, float g, float b)
+void GLH::clear(float r, float g, float b, float a)
 {
-	glClearColor(r, g, b, 1.f);
+	glClearColor(r, g, b, a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -452,11 +526,18 @@ void GLH::removeLight(int index)
 	}
 }
 
+float GLH::camfov = 0.f;
+GLH::Vec3f GLH::camPos;
+GLH::Vec3f GLH::camRot;
 
 void GLH::updateCamera(Vec3f pos, Vec3f rot, float fov)
 {
 	Matrix4 projMat = { 0 };
 	Matrix4 viewMat = { 0 };
+
+	camfov = fov;
+	camPos = pos;
+	camRot = rot;
 
 	float aspect = (float)screenW / (float)screenH;
 
@@ -727,4 +808,131 @@ void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f 
 	glFrontFace(GL_CCW);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
+}
+
+
+GLH::OGL_RenderBuffer GLH::createRenderBuffer(size_t width, size_t height, bool hasDepth)
+{
+	OGL_RenderBuffer buf = { 0 };
+
+	resizeRenderBuffer(buf, width, height, hasDepth);
+	
+	return buf;
+}
+
+void GLH::resizeRenderBuffer(OGL_RenderBuffer& buf, size_t width, size_t height, bool hasDepth)
+{
+	deleteRenderBuffer(buf);
+
+	buf.width = width;
+	buf.height = height;
+
+	glGenFramebuffers(1, &buf.framebuf);
+	glBindFramebuffer(GL_FRAMEBUFFER, buf.framebuf);
+
+	glGenTextures(1, &buf.texture);
+	glBindTexture(GL_TEXTURE_2D, buf.texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glGenRenderbuffers(1, &buf.renderBuf);
+	glBindRenderbuffer(GL_RENDERBUFFER, buf.renderBuf);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buf.renderBuf);
+
+	if (hasDepth)
+	{
+		glGenRenderbuffers(1, &buf.depthBuf);
+		glBindRenderbuffer(GL_RENDERBUFFER, buf.depthBuf);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buf.depthBuf);
+	}
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, buf.texture, 0);
+
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		puts("render buf not complete");
+		deleteRenderBuffer(buf);
+	}
+
+	glBindRenderbuffer(GL_FRAMEBUFFER, 0);
+}
+
+void GLH::drawRenderBuffer(const OGL_RenderBuffer& renderBuf)
+{
+	useShader(renderBufferShader);
+	useTexture(renderBuf.texture);
+	glBindVertexArray(screenModel.vao);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)screenModel.size);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+}
+
+void GLH::useRenderBuffer(const OGL_RenderBuffer& renderBuf)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, renderBuf.framebuf);
+	glViewport(0, 0, renderBuf.width, renderBuf.height);
+}
+
+GLH::OGL_RenderBuffer GLH::screenBuf = { 0 };
+
+void GLH::deleteRenderBuffer(OGL_RenderBuffer& renderBuf)
+{
+	glDeleteFramebuffers(1, &renderBuf.framebuf);
+	glDeleteRenderbuffers(1, &renderBuf.renderBuf);
+	memset(&renderBuf, 0, sizeof(OGL_RenderBuffer));
+}
+
+
+GLuint GLH::renderBufferShader = 0;
+
+
+void GLH::loadRenderBufferShader()
+{
+	const char* vert = 
+		"#version 330 core\n"
+		"layout(location = 0) in vec2 aPos;\n"
+		"out vec2 TexCoord;\n"
+		"void main()\n"
+		"{\n"
+		"	gl_Position = vec4(aPos, 0.f, 1.f);\n"
+		"	TexCoord = aPos * 0.5f + 0.5f;\n"
+		"}\n";
+
+	const char* frag = 
+		"#version 330 core\n"
+		"in vec2 TexCoord;\n"
+		"out vec4 FragColor;\n"
+		"uniform sampler2D renderedTexture;\n"
+		"void main()\n"
+		"{\n"
+		"	FragColor = texture(renderedTexture, TexCoord);\n"
+		"}\n";
+
+	renderBufferShader = loadShaderSrc(vert, frag);
+}
+
+
+GLH::OGL_Model GLH::screenModel = { 0 };
+
+void GLH::loadScreenModel()
+{
+	memset(&screenModel, 0, sizeof(OGL_Model));
+	screenModel.size = sizeof(screenVerticies) / sizeof(float);
+
+	glGenVertexArrays(1, &screenModel.vao);
+	glBindVertexArray(screenModel.vao);
+
+	glGenBuffers(1, &screenModel.vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, screenModel.vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(screenVerticies), screenVerticies, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2f), (void*)0);
+	glEnableVertexAttribArray(0);
 }

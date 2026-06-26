@@ -3,34 +3,6 @@
 #include <cstring>
 #include <fstream>
 
-size_t getFileSize(FILE* file)
-{
-	fseek(file, 0, SEEK_END);
-	size_t size = ftell(file);
-	fseek(file, 0, SEEK_SET);
-
-	return size;
-}
-
-// Out of the objs I've used, an average of 33 length lines is the least
-// Overestimating isn't as bad as underestimating (nvm 400MB mem spike)
-// 17,894,607 / 331,366 = 54.00
-//  1,850,225 /  54,816 = 33.75
-// 12,692,459 / 235,544 = 53.89
-//    134,864 /   2,784 = 48.44
-
-// Expect vector lengths to be about (line count / 3.33)
-// v, vt, vn were all the same in 3/4 models
-// smaller models are closer to (line count / 1.00)
-size_t getLineEstimate(FILE* file)
-{
-	size_t size = getFileSize(file);
-
-	size_t lineEst = size / 54;
-	
-	return size;
-}
-
 std::vector<GLH::Vertex> readObjFile(const std::string& name)
 {
 	/*
