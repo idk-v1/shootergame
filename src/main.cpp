@@ -176,7 +176,7 @@ int main()
 		GLH::updateCamera(player.pos, player.rot, fov);
 
 
-		int gridSize = 50;
+		int gridSize = 10;
 		size_t triCount = 0;
 
 		for (int x = -gridSize; x < gridSize; x += 6)

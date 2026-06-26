@@ -19,6 +19,7 @@
 #include "../BaseInjection.h"
 
 #define VEC_TMPL template <typename T, size_t S, npj::VectorSemantic _NPJSem_>
+#define VEC_TMPL_OPEN template <typename T, size_t S, npj::VectorSemantic _NPJSem_
 #define OVEC_TMPL template <size_t Os, npj::VectorSemantic O_NPJSem_>
 #define NVEC_TMPL template <typename Ot, size_t Os, npj::VectorSemantic O_NPJSem_>
 #define VEC_TYPE npj::Vector<T,S,_NPJSem_>

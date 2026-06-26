@@ -9,6 +9,7 @@ int main()
     npj::Vector<int, 3> d = b.cross(c);
 
     std::cout << a.h << ", " << a.a << "\n";
+    std::cout << npj::min({b, c, d}) << ", " << npj::max({b,c,d}) << "\n";
 
     return 0;
 }

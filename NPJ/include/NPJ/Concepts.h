@@ -36,6 +36,8 @@ namespace npj
 
     // @todo add error message if not derived from
     template <typename Base, typename T> concept DerivedFrom = std::derived_from<Base, T>;
+
+    struct Default_t {};
 }
 
 #endif
