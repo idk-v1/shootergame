@@ -42,7 +42,7 @@ int main()
 	GLuint skyboxShader = GLH::loadShader(path + "/src/Engine/shaders/skybox.vert", path + "/src/Engine/shaders/skybox.frag");
 
 	GLuint skybox = GLH::loadSkybox(path + "/res/skybox.png");
-	GLuint skyboxTerrain = GLH::loadSkybox("res/skyboxTerrain.png");
+	GLuint skyboxTerrain = GLH::loadSkybox(path + "/res/skyboxTerrain.png");
 	GLH::loadCubeModel();
 
 
@@ -51,7 +51,7 @@ int main()
 	if (useFancyClouds)
 	{
 		GLH::loadBallModel();
-		cloudShader = GLH::loadShader("src/Engine/shaders/cloudbox.vert", "src/Engine/shaders/cloudbox.frag");
+		cloudShader = GLH::loadShader(path + "/src/Engine/shaders/cloudbox.vert", path + "/src/Engine/shaders/cloudbox.frag");
 	}
 
 	GLH::OGL_Model pterModel = GLH::loadModel(path + "/res/pter.obj", 0.1f);
