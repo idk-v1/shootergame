@@ -771,7 +771,7 @@ void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, float 
 	viewMat(3, 3) = 1.f;
 
 	Matrix4 mat;
-	float rx = toRad(wrapDeg(0.f));
+	float rx = toRad(wrapDeg(time * 0.5f));
 	float ry = toRad(wrapDeg(0.f));
 	float rz = toRad(wrapDeg(time));
 
