@@ -317,7 +317,7 @@ size_t GLH::drawModelLOD(const std::vector<OGL_Model>& models, GLuint texture, c
 	// may need tweaking
 	float fovLen = sqrtf(powf(sinf(0.f - camfov / 180.f * 3.1415f), 2.f) + 
 		powf(1.f - cosf(camfov / 180.f * 3.1415f), 2.f));
-	float lodscale = 2.f;
+	float lodscale = 0.5f;
 	int index = clampf(0, logf(fovLen * lodscale * closeDist), models.size() - 1);
 	//setUniformInt(activeShader, "lod", index);
 

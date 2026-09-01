@@ -78,7 +78,6 @@ int main()
 
 	GLH::addDirectionalLight(GLH::Vec3f(0.8f, 0.7f, 0.7f), GLH::Vec3f(2.f, 1.f, 1.f).normalize(), 0.1f);
 	GLH::addAmbientLight(GLH::Vec3f(0.1f, 0.1f, 0.05f));
-	GLH::addAmbientLight(GLH::Vec3f(0.5f, 0.5f, 0.5f));
 
 	GLH::loadRenderBufferShader();
 	GLH::loadScreenModel();
