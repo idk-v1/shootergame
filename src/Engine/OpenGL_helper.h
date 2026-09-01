@@ -142,7 +142,7 @@ namespace GLH
 
 	extern OGL_Model ballModel;
 	void loadBallModel();
-	void drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f move);
+	void drawCloudBall(Vec3f rot, float height, float radius, float fov, float time);
 
 	struct OGL_RenderBuffer
 	{

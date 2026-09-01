@@ -731,7 +731,7 @@ void GLH::loadBallModel()
 	glEnableVertexAttribArray(0);
 }
 
-void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f move)
+void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, float time)
 {
 	Matrix4 projMat = { 0 };
 	Matrix4 viewMat = { 0 };
@@ -771,9 +771,9 @@ void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f 
 	viewMat(3, 3) = 1.f;
 
 	Matrix4 mat;
-	float rx = toRad(wrapDeg(move.x));
-	float ry = toRad(wrapDeg(move.y));
-	float rz = toRad(wrapDeg(move.z));
+	float rx = toRad(wrapDeg(0.f));
+	float ry = toRad(wrapDeg(0.f));
+	float rz = toRad(wrapDeg(time));
 
 	float ax = radius;
 	float ay = radius;
@@ -804,6 +804,8 @@ void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, Vec3f 
 	setUniformMat4(activeShader, "projMat", projMat);
 	setUniformMat4(activeShader, "viewMat", viewMat);
 	setUniformMat4(activeShader, "modelMat", mat);
+	setUniformFloat(activeShader, "radius", radius);
+	setUniformFloat(activeShader, "time", time);
 
 	glFrontFace(GL_CW);
 	glEnable(GL_BLEND);

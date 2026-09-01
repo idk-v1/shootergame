@@ -163,7 +163,8 @@ int main()
 			GLH::useRenderBuffer(quarterResBuf);
 			GLH::clear(0.f, 0.f, 0.f, 0.f);
 			GLH::useShader(cloudShader);
-			GLH::drawCloudBall(player.rot, 200.f, 225.f, fov, GLH::Vec3f(0.f, 0.f, ticks / 30.f));
+			for (int i = 2; i >= 0; --i)
+				GLH::drawCloudBall(player.rot, 200.f, 225.f + 15.f * i, fov, ticks / (30.f + 20.f * i));
 
 			GLH::useRenderBuffer(GLH::screenBuf);
 			GLH::drawRenderBuffer(quarterResBuf);

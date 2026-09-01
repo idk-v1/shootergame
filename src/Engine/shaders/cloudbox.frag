@@ -3,6 +3,9 @@ out vec4 FragColor;
 
 in vec3 TexCoords;
 
+uniform float radius;
+uniform float time;
+
 // https://github.com/shff/opengl_sky
 
 float hash(float n)
@@ -41,7 +44,8 @@ void main()
 	const vec4 darkClouds   = vec4(0.5f, 0.5f, 0.5f, 1.0f);
 
 	const float scale = 5.f;
-	float cloud = fbm(TexCoords * scale);
+	vec3 coords = vec3(TexCoords.x, TexCoords.y + radius + time * 0.001f, TexCoords.z);
+	float cloud = pow(fbm(coords * scale), 1.1f);
 
 	if (cloud < 0.25f)
 		discard;                                                                // [0.00 - 0.25]
