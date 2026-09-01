@@ -320,7 +320,7 @@ size_t GLH::drawModelLOD(const std::vector<OGL_Model>& models, GLuint texture, c
 	float lodscale = 0.1f;
 	float lodpow = 0.3f;
 	int index = clampf(0, powf(fovLen * lodscale * closeDist, lodpow), models.size() - 1);
-	setUniformInt(activeShader, "lod", index);
+	//setUniformInt(activeShader, "lod", index);
 
 	return drawModel(models[index], texture, pos, rot, scale);
 }
