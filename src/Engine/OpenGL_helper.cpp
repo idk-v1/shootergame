@@ -309,11 +309,16 @@ size_t GLH::drawModelLOD(const std::vector<OGL_Model>& models, GLuint texture, c
 	// its better to have it look better far away than to look terrible close up
 	// worst case: this does nothing
 	float closeDist = fmaxf(Vec3f(pos - camPos).length() - models[0].boundingRad * scale.maxValue(), 0.f);
+	if (closeDist > 50.f * models[0].boundingRad * scale.maxValue())
+		return 0;
 
 	// probably going to be magic constants here
 	// should include FOV
 	// may need tweaking
-	int index = clampf(0, logf(camfov / 180.f / 2.f * closeDist), models.size() - 1);
+	float fovLen = sqrtf(powf(sinf(0.f - camfov / 180.f * 3.1415f), 2.f) + 
+		powf(1.f - cosf(camfov / 180.f * 3.1415f), 2.f));
+	float lodscale = 2.f;
+	int index = clampf(0, logf(fovLen * lodscale * closeDist), models.size() - 1);
 	//setUniformInt(activeShader, "lod", index);
 
 	return drawModel(models[index], texture, pos, rot, scale);

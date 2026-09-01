@@ -18,5 +18,5 @@ void main()
 	//case 2: FragColor = vec4(0.f, 1.f, 0.f, 1.f); break;
 	//case 3: FragColor = vec4(0.f, 1.f, 1.f, 1.f); break;
 	//}
-	FragColor = texture(tex, texCoord) * vec4(colorMul, 1.f);
+	FragColor = texture(tex, vec2(texCoord.x, 1.f - texCoord.y)) * vec4(colorMul, 1.f);
 }

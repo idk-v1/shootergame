@@ -78,6 +78,7 @@ int main()
 
 	GLH::addDirectionalLight(GLH::Vec3f(0.8f, 0.7f, 0.7f), GLH::Vec3f(2.f, 1.f, 1.f).normalize(), 0.1f);
 	GLH::addAmbientLight(GLH::Vec3f(0.1f, 0.1f, 0.05f));
+	GLH::addAmbientLight(GLH::Vec3f(0.5f, 0.5f, 0.5f));
 
 	GLH::loadRenderBufferShader();
 	GLH::loadScreenModel();
@@ -175,7 +176,6 @@ int main()
 		GLH::useShader(shader);
 		GLH::updateCamera(player.pos, player.rot, fov);
 
-
 		int gridSize = 10;
 		size_t triCount = 0;
 
@@ -191,6 +191,7 @@ int main()
 					//	GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
 					//	GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks))) / 3;
 				}
+
 
 		SDL_GL_SwapWindow(window);
 		Uint64 renderTimeEnd = SDL_GetTicksNS();

@@ -38,7 +38,8 @@ namespace GLH
 		const Vec3f& rot = {0.f, 0.f, 0.f}, const Vec3f& scale = { 1.f, 1.f, 1.f });
 
 	// gen models from here: https://low-poly.com/tools/lod
-	// site above strips textures. need to find better
+	// flips textures y coord for some reason ^^^^
+	// convert models from here: https://furnimesh.com/convert/app/
 	std::vector<OGL_Model> loadModelLOD(const std::string& name, int count, float scale = 1.f, GLH::Vec3f offset = GLH::Vec3f(0.f, 0.f, 0.f));
 	void unloadModelLOD(std::vector<OGL_Model>& models);
 	size_t drawModelLOD(const std::vector<OGL_Model>& models, GLuint texture, const Vec3f& pos = { 0.f, 0.f, 0.f },
