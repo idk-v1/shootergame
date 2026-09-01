@@ -315,11 +315,12 @@ size_t GLH::drawModelLOD(const std::vector<OGL_Model>& models, GLuint texture, c
 	// probably going to be magic constants here
 	// should include FOV
 	// may need tweaking
-	float fovLen = sqrtf(powf(sinf(0.f - camfov / 180.f * 3.1415f), 2.f) + 
+	float fovLen = sqrtf(powf(0.f - sinf(camfov / 180.f * 3.1415f), 2.f) + 
 		powf(1.f - cosf(camfov / 180.f * 3.1415f), 2.f));
-	float lodscale = 0.5f;
-	int index = clampf(0, logf(fovLen * lodscale * closeDist), models.size() - 1);
-	//setUniformInt(activeShader, "lod", index);
+	float lodscale = 0.1f;
+	float lodpow = 0.3f;
+	int index = clampf(0, powf(fovLen * lodscale * closeDist, lodpow), models.size() - 1);
+	setUniformInt(activeShader, "lod", index);
 
 	return drawModel(models[index], texture, pos, rot, scale);
 }
