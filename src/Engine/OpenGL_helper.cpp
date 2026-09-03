@@ -309,7 +309,7 @@ size_t GLH::drawModelLOD(const std::vector<OGL_Model>& models, GLuint texture, c
 		powf(1.f - cosf(camfov / 180.f * 3.1415f), 2.f));
 	float lodscale = 0.1f;
 	float lodpow = 0.3f;
-	int index = clampf(0, powf(fovLen * lodscale * closeDist, lodpow), models.size() - 1);
+	int index = (int)clampf(0, powf(fovLen * lodscale * closeDist, lodpow), (float)models.size() - 1);
 	//setUniformInt(activeShader, "lod", index);
 
 	return drawModel(models[index], texture, pos, rot, scale);
@@ -369,8 +369,8 @@ void GLH::useTexture(GLuint texture, GLuint slot)
 
 void GLH::setViewSize(size_t w, size_t h, OGL_RenderBuffer& renderBuf)
 {
-	renderBuf.width = w;
-	renderBuf.height = h;
+	renderBuf.width = (GLsizei)w;
+	renderBuf.height = (GLsizei)h;
 	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 	screenW = w;
 	screenH = h;
@@ -760,7 +760,7 @@ size_t GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, floa
 	viewMat(3, 3) = 1.f;
 
 	Matrix4 mat;
-	float rx = toRad(wrapDeg(time * 0.f));
+	float rx = toRad(wrapDeg(time * 0.5f));
 	float ry = toRad(wrapDeg(0.f));
 	float rz = toRad(wrapDeg(time));
 
@@ -824,29 +824,29 @@ void GLH::resizeRenderBuffer(OGL_RenderBuffer& buf, size_t width, size_t height,
 {
 	deleteRenderBuffer(buf);
 
-	buf.width = width;
-	buf.height = height;
+	buf.width = (GLsizei)width;
+	buf.height = (GLsizei)height;
 
 	glGenFramebuffers(1, &buf.framebuf);
 	glBindFramebuffer(GL_FRAMEBUFFER, buf.framebuf);
 
 	glGenTextures(1, &buf.texture);
 	glBindTexture(GL_TEXTURE_2D, buf.texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)width, (GLsizei)height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	glGenRenderbuffers(1, &buf.renderBuf);
 	glBindRenderbuffer(GL_RENDERBUFFER, buf.renderBuf);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, (GLsizei)width, (GLsizei)height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buf.renderBuf);
 
 	if (hasDepth)
 	{
 		glGenRenderbuffers(1, &buf.depthBuf);
 		glBindRenderbuffer(GL_RENDERBUFFER, buf.depthBuf);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, (GLsizei)width, (GLsizei)height);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, buf.depthBuf);
 	}
 
