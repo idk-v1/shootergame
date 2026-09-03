@@ -121,21 +121,11 @@ GLH::OGL_Model GLH::loadModel(const std::string& name, float scale, GLH::Vec3f o
 	std::vector<GLH::Vertex> data = readObjFile(name);
 	if (scale != 1.f)
 	{
-		//std::ofstream file(name.substr(0, name.size() - 4) + "OUT.obj");
-		//GLH::Vec3f avg;
 		for (size_t i = 0; i < data.size(); ++i)
 		{
 			data[i].pos *= scale;
 			data[i].pos -= offset;
-			//avg += data[i].pos;
-			//file << data[i].pos.x << ", " << data[i].pos.y << ", " << data[i].pos.z << ",\n";
 		}
-		//avg /= data.size();
-		//float maxDist = 0.f;
-		//for (size_t i = 0; i < data.size(); ++i)
-		//	maxDist = fmaxf(maxDist, (data[i].pos - avg).length());
-		//file << "avg " << avg.x << " " << avg.y << " " << avg.z << " rad " << maxDist;
-		//file.close();
 	}
 	return loadModel(data.data(), data.size());
 }
@@ -658,7 +648,7 @@ GLuint GLH::loadSkybox(const std::string& name)
 }
 
 
-void GLH::drawSkybox(Vec3f rot, float fov, GLuint texture)
+size_t GLH::drawSkybox(Vec3f rot, float fov, GLuint texture)
 {
 	Matrix4 projMat = { 0 };
 	Matrix4 viewMat = { 0 };
@@ -705,6 +695,8 @@ void GLH::drawSkybox(Vec3f rot, float fov, GLuint texture)
 	glDisable(GL_DEPTH_TEST);
 	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)cubeModel.size);
 	glEnable(GL_DEPTH_TEST);
+
+	return cubeModel.size;
 }
 
 
@@ -713,10 +705,7 @@ GLH::OGL_Model GLH::ballModel;
 
 void GLH::loadBallModel()
 {
-	// change later to non full model
-	// only needs verts
-	//ballModel = loadModel("res/sphere.obj", 1.f / 0.695000827f);
-
+	// change later to non full model bc it only needs verts
 	memset(&ballModel, 0, sizeof(OGL_Model));
 	ballModel.size = sizeof(ballModelVertices) / sizeof(float) / 3;
 
@@ -731,7 +720,7 @@ void GLH::loadBallModel()
 	glEnableVertexAttribArray(0);
 }
 
-void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, float time)
+size_t GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, float time)
 {
 	Matrix4 projMat = { 0 };
 	Matrix4 viewMat = { 0 };
@@ -816,6 +805,8 @@ void GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, float 
 	glFrontFace(GL_CCW);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
+
+	return ballModel.size;
 }
 
 
@@ -870,7 +861,7 @@ void GLH::resizeRenderBuffer(OGL_RenderBuffer& buf, size_t width, size_t height,
 	glBindRenderbuffer(GL_FRAMEBUFFER, 0);
 }
 
-void GLH::drawRenderBuffer(const OGL_RenderBuffer& renderBuf)
+size_t GLH::drawRenderBuffer(const OGL_RenderBuffer& renderBuf)
 {
 	useShader(renderBufferShader);
 	useTexture(renderBuf.texture);
@@ -880,6 +871,8 @@ void GLH::drawRenderBuffer(const OGL_RenderBuffer& renderBuf)
 	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)screenModel.size);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
+
+	return screenModel.size;
 }
 
 void GLH::useRenderBuffer(const OGL_RenderBuffer& renderBuf)

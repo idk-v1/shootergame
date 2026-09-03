@@ -17,10 +17,6 @@ std::string getDir();
 
 int main()
 {
-	// Linux needs an absolute path; cwd is not where the executable is,
-	// its the directory where the program was started,
-	// i.e. if I am @ /a/b/c/ and i do /foo/bar/shootergame.o
-	// then the CWD is /a/b/c/
 	std::string path = getDir();
 
 
@@ -50,15 +46,11 @@ int main()
 	GLH::loadCubeModel();
 
 
-	bool useFancyClouds = true;
+	int fancyClouds = 4;
 	GLuint cloudShader = 0;
-	if (useFancyClouds)
-	{
-		GLH::loadBallModel();
-		cloudShader = GLH::loadShader(path + "/src/Engine/shaders/cloudbox.vert", path + "/src/Engine/shaders/cloudbox.frag");
-	}
+	GLH::loadBallModel();
+	cloudShader = GLH::loadShader(path + "/src/Engine/shaders/cloudbox.vert", path + "/src/Engine/shaders/cloudbox.frag");
 
-	//GLH::OGL_Model pterModel = GLH::loadModel(path + "/res/pter.obj", 0.1f);
 	std::vector<GLH::OGL_Model> pterModel = GLH::loadModelLOD(path + "/res/pter", 4, 0.1f);
 	GLuint pterTex = GLH::loadTexture(path + "/res/pter.png");
   
@@ -152,32 +144,32 @@ int main()
 			}
 		}
 
+		size_t triCount = 0;
 		Uint64 renderTimeStart = SDL_GetTicksNS();
 		GLH::useRenderBuffer(GLH::screenBuf);
 		GLH::clearDepth();
 		GLH::useShader(skyboxShader);
-		GLH::drawSkybox(player.rot, fov, skybox);
+		triCount += GLH::drawSkybox(player.rot, fov, skybox);
 		
-		if (useFancyClouds)
+		if (fancyClouds)
 		{
 			GLH::useRenderBuffer(quarterResBuf);
 			GLH::clear(0.f, 0.f, 0.f, 0.f);
 			GLH::useShader(cloudShader);
-			for (int i = 2; i >= 0; --i)
-				GLH::drawCloudBall(player.rot, 200.f, 225.f + 15.f * i, fov, ticks / (30.f + 20.f * i));
+			for (int i = fancyClouds - 1; i >= 0; --i)
+				triCount += GLH::drawCloudBall(player.rot, 200.f, 225.f + 15.f * i, fov, ticks / (30.f + 20.f * i));
 
 			GLH::useRenderBuffer(GLH::screenBuf);
-			GLH::drawRenderBuffer(quarterResBuf);
+			triCount += GLH::drawRenderBuffer(quarterResBuf);
 
 			GLH::useShader(skyboxShader);
-			GLH::drawSkybox(player.rot, fov, skyboxTerrain);
+			triCount + GLH::drawSkybox(player.rot, fov, skyboxTerrain);
 		}
 
 		GLH::useShader(shader);
 		GLH::updateCamera(player.pos, player.rot, fov);
 
 		int gridSize = 10;
-		size_t triCount = 0;
 
 		for (int x = -gridSize; x < gridSize; x += 6)
 			for (int y = -gridSize; y < gridSize; y += 4)
@@ -186,10 +178,6 @@ int main()
 					triCount += GLH::drawModelLOD(pterModel, pterTex,
 						GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
 						GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks))) / 3;
-
-					//triCount += GLH::drawModel(pterModel, pterTex,
-					//	GLH::Vec3f(x * 10.f, y * 10.f, z * 10.f),
-					//	GLH::Vec3f(((x + z) * 10.f + ticks), 0.f, ((x + z) * 10.f + ticks))) / 3;
 				}
 
 
@@ -221,19 +209,12 @@ int main()
 
 	GLH::unloadShader(shader);
 
-	//GLH::unloadModel(pterModel);
 	GLH::unloadModelLOD(pterModel);
 	GLH::unloadTexture(pterTex);
 
-	//GLH::unloadModel(sphere);
-	//GLH::unloadTexture(GLH::noTexture);
-
-	if (useFancyClouds)
-	{
-		GLH::unloadShader(cloudShader);
-		GLH::unloadModel(GLH::ballModel);
-	}
-
+	GLH::unloadShader(cloudShader);
+	GLH::unloadModel(GLH::ballModel);
+	
 	GLH::unloadShader(skyboxShader);
 	GLH::unloadTexture(skybox);
 	GLH::unloadTexture(skyboxTerrain);

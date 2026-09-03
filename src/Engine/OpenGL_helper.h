@@ -138,11 +138,11 @@ namespace GLH
 	extern OGL_Model cubeModel;
 	void loadCubeModel();
 	GLuint loadSkybox(const std::string& name);
-	void drawSkybox(Vec3f rot, float fov, GLuint texture);
+	size_t drawSkybox(Vec3f rot, float fov, GLuint texture);
 
 	extern OGL_Model ballModel;
 	void loadBallModel();
-	void drawCloudBall(Vec3f rot, float height, float radius, float fov, float time);
+	size_t drawCloudBall(Vec3f rot, float height, float radius, float fov, float time);
 
 	struct OGL_RenderBuffer
 	{
@@ -157,7 +157,7 @@ namespace GLH
 
 	OGL_RenderBuffer createRenderBuffer(size_t width, size_t height, bool hasDepth = true);
 	void resizeRenderBuffer(OGL_RenderBuffer& buf, size_t width, size_t height, bool hasDepth = true);
-	void drawRenderBuffer(const OGL_RenderBuffer& renderBuf);
+	size_t drawRenderBuffer(const OGL_RenderBuffer& renderBuf);
 	void useRenderBuffer(const OGL_RenderBuffer& renderBuf);
 	void deleteRenderBuffer(OGL_RenderBuffer& renderBuf);
 	extern GLuint renderBufferShader;

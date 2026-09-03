@@ -32,11 +32,6 @@ std::vector<GLH::Vertex> readObjFile(const std::string& name)
 	if (file)
 	{
 		size_t lineNum = 0;
-		//size_t lineEst = getLineEstimate(file);
-		//points.reserve(lineEst / 3.33f);
-		//texCoords.reserve(lineEst / 3.33f);
-		//normals.reserve(lineEst / 3.33f);
-		//verts.reserve(lineEst / 3.33f);
 
 		char line[200];
 		while (fgets(line, 200, file))
@@ -129,10 +124,6 @@ std::vector<GLH::Vertex> readObjFile(const std::string& name)
 
 			++lineNum;
 		}
-
-		//printf("\"%s\"\nlines:%llu size:%llu lineLen:%.2f\n", name.data(), lineNum, fileSize, fileSize / (float)lineNum);
-		//printf("v:%llu\nvt:%llu\nvn:%llu\nverts:%llu\n\n",
-		//	points.size(), texCoords.size(), normals.size(), verts.size());
 
 		fclose(file);
 	}
