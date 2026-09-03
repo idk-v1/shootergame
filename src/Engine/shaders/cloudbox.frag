@@ -47,15 +47,19 @@ void main()
 	const vec4 darkClouds   = vec4(0.5f, 0.5f, 0.5f, 1.0f);
 
 	const float scale = 5.f;
-	vec3 coords = vec3(TexCoords.x, TexCoords.y + time * 0.002f, TexCoords.z);
+	vec3 coords = vec3(TexCoords.x, TexCoords.y + time * 0.02f, TexCoords.z);
 	float cloud = pow(fbm(coords * scale), 1.2f);
 
+	vec4 color = vec4(0.f, 0.f, 0.f, 0.f);
 	if (cloud < 0.25f)
-		discard;                                                                // [0.00 - 0.25]
+		discard;                                                            // [0.00 - 0.25]
 	else if (cloud < 0.50f)
-		FragColor = mix(noClouds, thinClouds, pow((cloud - 0.25f) * 4.f, 3.f)); // [0.25 - 0.50]
+		color = mix(noClouds, thinClouds, pow((cloud - 0.25f) * 4.f, 3.f)); // [0.25 - 0.50]
 	else if (cloud < 0.75f)
-		FragColor = mix(thinClouds, normalClouds, (cloud - 0.50f) * 4.f);       // [0.50 - 0.75]
+		color = mix(thinClouds, normalClouds, (cloud - 0.50f) * 4.f);       // [0.50 - 0.75]
 	else
-		FragColor = mix(normalClouds, darkClouds, (cloud - 0.75f) * 4.f);       // [0.75 - 1.00]
+		color = mix(normalClouds, darkClouds, (cloud - 0.75f) * 4.f);       // [0.75 - 1.00]
+
+	float light = clamp(sin(time) + 0.75f, 0.25f, 1.f);
+	FragColor = vec4(color.xyz * light, color.w);
 }

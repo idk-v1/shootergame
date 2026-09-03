@@ -142,7 +142,8 @@ namespace GLH
 
 	extern OGL_Model ballModel;
 	void loadBallModel();
-	size_t drawCloudBall(Vec3f rot, float height, float radius, float fov, float time);
+	size_t drawCloudBall(Vec3f rot, float height, float radius, float fov, float xoff, float zoff, float time);
+	size_t drawSkyBall(Vec3f rot, float fov, float time);
 
 	struct OGL_RenderBuffer
 	{
@@ -157,7 +158,7 @@ namespace GLH
 
 	OGL_RenderBuffer createRenderBuffer(size_t width, size_t height, bool hasDepth = true);
 	void resizeRenderBuffer(OGL_RenderBuffer& buf, size_t width, size_t height, bool hasDepth = true);
-	size_t drawRenderBuffer(const OGL_RenderBuffer& renderBuf);
+	size_t drawRenderBuffer(const OGL_RenderBuffer& renderBuf, bool blend);
 	void useRenderBuffer(const OGL_RenderBuffer& renderBuf);
 	void deleteRenderBuffer(OGL_RenderBuffer& renderBuf);
 	extern GLuint renderBufferShader;

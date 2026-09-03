@@ -46,9 +46,10 @@ int main()
 	float cloudSpeed = 1.f;
 	float groundRadius = 200.f;
 	int fancyClouds = 4;
-	GLuint cloudShader = 0;
 	GLH::loadBallModel();
-	cloudShader = GLH::loadShader(path + "/src/Engine/shaders/cloudbox.vert", path + "/src/Engine/shaders/cloudbox.frag");
+	GLuint cloudShader = GLH::loadShader(path + "/src/Engine/shaders/cloudbox.vert", path + "/src/Engine/shaders/cloudbox.frag");
+	GLuint skyShader = GLH::loadShader(path + "/src/Engine/shaders/sky.vert", path + "/src/Engine/shaders/sky.frag");
+
 
 	std::vector<GLH::OGL_Model> pterModel = GLH::loadModelLOD(path + "/res/pter", 4, 0.1f);
 	GLuint pterTex = GLH::loadTexture(path + "/res/pter.png");
@@ -176,24 +177,29 @@ int main()
 		Uint64 renderTimeStart = SDL_GetTicksNS();
 		GLH::useRenderBuffer(GLH::screenBuf);
 		GLH::clearDepth();
-		GLH::useShader(skyboxShader);
-		triCount += GLH::drawSkybox(player.rot, fov, skybox);
+
+		//GLH::useShader(skyboxShader);
+		//triCount += GLH::drawSkybox(player.rot, fov, skybox);
 		
-		if (fancyClouds)
-		{
-			GLH::useRenderBuffer(quarterResBuf);
-			GLH::clear(0.f, 0.f, 0.f, 0.f);
-			GLH::useShader(cloudShader);
-			for (int i = fancyClouds - 1; i >= 0; --i)
-				triCount += GLH::drawCloudBall(player.rot, groundRadius,
-					cloudRadius + cloudLayerDist * i, fov, ticks * cloudSpeed / (30.f + 20.f * i));
 
-			GLH::useRenderBuffer(GLH::screenBuf);
-			triCount += GLH::drawRenderBuffer(quarterResBuf);
+		GLH::useRenderBuffer(quarterResBuf);
 
-			GLH::useShader(skyboxShader);
-			triCount += GLH::drawSkybox(player.rot, fov, skyboxTerrain);
-		}
+		GLH::useShader(skyShader);
+		triCount += GLH::drawSkyBall(player.rot, fov, ticks / 100.f);
+
+		GLH::useShader(cloudShader);
+		for (int i = fancyClouds - 1; i >= 0; --i)
+			triCount += GLH::drawCloudBall(player.rot, groundRadius,
+				cloudRadius + cloudLayerDist * i, fov, 
+				ticks * cloudSpeed / (30.f + 20.f * i) * 0.5f,
+				ticks * cloudSpeed / (30.f + 20.f * i) * 1.0f,
+				ticks / 100.f);
+
+		GLH::useRenderBuffer(GLH::screenBuf);
+		triCount += GLH::drawRenderBuffer(quarterResBuf, false);
+
+		GLH::useShader(skyboxShader);
+		triCount += GLH::drawSkybox(player.rot, fov, skyboxTerrain);
 
 		GLH::useShader(shader);
 		GLH::updateCamera(player.pos, player.rot, fov);
@@ -242,6 +248,7 @@ int main()
 	GLH::unloadTexture(pterTex);
 
 	GLH::unloadShader(cloudShader);
+	GLH::unloadShader(skyShader);
 	GLH::unloadModel(GLH::ballModel);
 	
 	GLH::unloadShader(skyboxShader);

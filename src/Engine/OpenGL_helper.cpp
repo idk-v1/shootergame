@@ -720,7 +720,7 @@ void GLH::loadBallModel()
 	glEnableVertexAttribArray(0);
 }
 
-size_t GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, float time)
+size_t GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, float xoff, float zoff, float time)
 {
 	Matrix4 projMat = { 0 };
 	Matrix4 viewMat = { 0 };
@@ -760,9 +760,9 @@ size_t GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, floa
 	viewMat(3, 3) = 1.f;
 
 	Matrix4 mat;
-	float rx = toRad(wrapDeg(time * 0.5f));
+	float rx = toRad(wrapDeg(xoff));
 	float ry = toRad(wrapDeg(0.f));
-	float rz = toRad(wrapDeg(time));
+	float rz = toRad(wrapDeg(zoff));
 
 	float ax = radius;
 	float ay = radius;
@@ -805,6 +805,91 @@ size_t GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, floa
 	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)ballModel.size);
 	glFrontFace(GL_CCW);
 	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+
+	return ballModel.size;
+}
+
+size_t GLH::drawSkyBall(Vec3f rot, float fov, float time)
+{
+	Matrix4 projMat = { 0 };
+	Matrix4 viewMat = { 0 };
+
+	float aspect = (float)screenW / (float)screenH;
+
+	float far = 1000.f;
+	float near = 0.01f;
+
+	projMat(0, 0) = 1.f / (aspect * tanf(toRad(fov) / 2.f));
+	projMat(1, 1) = 1.f / tanf(toRad(fov) / 2.f);
+	projMat(2, 2) = (far + near) / (near - far);
+	projMat(3, 2) = -1.f;
+	projMat(2, 3) = -(2.f * far * near) / (far - near);
+
+	Vec3f dir = Vec3f(
+		-sinf(toRad(rot.y)) * cosf(toRad(rot.x)),
+		sinf(toRad(rot.x)),
+		-cosf(toRad(rot.y)) * cosf(toRad(rot.x))
+	).normalize();
+	Vec3f right = dir.cross(Vec3f(0.f, 1.f, 0.f)).normalize();
+	Vec3f up = right.cross(dir);
+
+	Vec3f pos(0.f, 0.f, 0.f);
+	viewMat(0, 0) = right.x;
+	viewMat(0, 1) = right.y;
+	viewMat(0, 2) = right.z;
+	viewMat(1, 0) = up.x;
+	viewMat(1, 1) = up.y;
+	viewMat(1, 2) = up.z;
+	viewMat(2, 0) = -dir.x;
+	viewMat(2, 1) = -dir.y;
+	viewMat(2, 2) = -dir.z;
+	viewMat(0, 3) = -right.dot(pos);
+	viewMat(1, 3) = -up.dot(pos);
+	viewMat(2, 3) = dir.dot(pos);
+	viewMat(3, 3) = 1.f;
+
+	Matrix4 mat;
+	float rx = toRad(wrapDeg(0.f));
+	float ry = toRad(wrapDeg(0.f));
+	float rz = toRad(wrapDeg(0.f));
+
+	float ax = 1.f;
+	float ay = 1.f;
+	float az = 1.f;
+	float ox = 0.f;
+	float oy = 0.f;
+	float oz = 0.f;
+	float cx = cosf(rx);
+	float cy = cosf(ry);
+	float cz = cosf(rz);
+	float sx = sinf(rx);
+	float sy = sinf(ry);
+	float sz = sinf(rz);
+	mat(0, 0) = ax * cy * cz;
+	mat(0, 1) = ax * cy * sz;
+	mat(0, 2) = -ax * sy;
+	mat(0, 3) = ox;
+	mat(1, 0) = az * sx * sy * cz - ay * cx * sz;
+	mat(1, 1) = az * sx * sy * sz + ay * cx * cz;
+	mat(1, 2) = az * sx * cy;
+	mat(1, 3) = oy;
+	mat(2, 0) = az * cx * sy * cz + az * sx * sz;
+	mat(2, 1) = az * cx * sy * sz - az * sx * cz;
+	mat(2, 2) = az * cx * cy;
+	mat(2, 3) = oz;
+	mat(3, 3) = 1.f;
+
+	setUniformMat4(activeShader, "projMat", projMat);
+	setUniformMat4(activeShader, "viewMat", viewMat);
+	setUniformMat4(activeShader, "modelMat", mat);
+	setUniformFloat(activeShader, "time", time);
+
+	glFrontFace(GL_CW);
+	glDisable(GL_DEPTH_TEST);
+	glBindVertexArray(ballModel.vao);
+	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)ballModel.size);
+	glFrontFace(GL_CCW);
 	glEnable(GL_DEPTH_TEST);
 
 	return ballModel.size;
@@ -862,13 +947,14 @@ void GLH::resizeRenderBuffer(OGL_RenderBuffer& buf, size_t width, size_t height,
 	glBindRenderbuffer(GL_FRAMEBUFFER, 0);
 }
 
-size_t GLH::drawRenderBuffer(const OGL_RenderBuffer& renderBuf)
+size_t GLH::drawRenderBuffer(const OGL_RenderBuffer& renderBuf, bool blend)
 {
 	useShader(renderBufferShader);
 	useTexture(renderBuf.texture);
 	glBindVertexArray(screenModel.vao);
 	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
+	if (blend)
+		glEnable(GL_BLEND);
 	glDrawArrays(GL_TRIANGLES, 0, (GLsizei)screenModel.size);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
