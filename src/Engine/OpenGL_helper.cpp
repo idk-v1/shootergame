@@ -760,7 +760,7 @@ size_t GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, floa
 	viewMat(3, 3) = 1.f;
 
 	Matrix4 mat;
-	float rx = toRad(wrapDeg(time * 0.5f));
+	float rx = toRad(wrapDeg(time * 0.f));
 	float ry = toRad(wrapDeg(0.f));
 	float rz = toRad(wrapDeg(time));
 
@@ -794,6 +794,7 @@ size_t GLH::drawCloudBall(Vec3f rot, float height, float radius, float fov, floa
 	setUniformMat4(activeShader, "viewMat", viewMat);
 	setUniformMat4(activeShader, "modelMat", mat);
 	setUniformFloat(activeShader, "radius", radius);
+	setUniformFloat(activeShader, "height", height);
 	setUniformFloat(activeShader, "time", time);
 
 	glFrontFace(GL_CW);

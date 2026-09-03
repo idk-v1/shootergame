@@ -2,6 +2,7 @@
 out vec4 FragColor;
 
 in vec3 TexCoords;
+in float relHeight;
 
 uniform float time;
 
@@ -37,6 +38,9 @@ float fbm(vec3 p)
 
 void main()
 {
+	if (relHeight < -10)
+		discard;
+
 	const vec4 noClouds     = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	const vec4 thinClouds   = vec4(0.8f, 0.8f, 0.8f, 0.6f);
 	const vec4 normalClouds = vec4(0.8f, 0.8f, 0.8f, 1.0f);

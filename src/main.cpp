@@ -2,11 +2,6 @@
 #include <glad/glad.h>
 #include <filesystem>
 #include <climits>
-#ifndef _WIN32
-#include <unistd.h>
-#else
-#include <Windows.h>
-#endif
 
 #include "Engine/OpenGL_helper.h"
 #include "Engine/vectorMath.h"
@@ -46,6 +41,10 @@ int main()
 	GLH::loadCubeModel();
 
 
+	float cloudRadius = 225.f;
+	float cloudLayerDist = 15.f;
+	float cloudSpeed = 1.f;
+	float groundRadius = 200.f;
 	int fancyClouds = 4;
 	GLuint cloudShader = 0;
 	GLH::loadBallModel();
@@ -141,6 +140,35 @@ int main()
 				++ticks;
 				playerController(player, lookSpeed, fov, window);
 				player.updatePhysics(1.1f);
+
+				int valueDiff = 0;
+				if (keys[SDL_SCANCODE_UP])
+					valueDiff += 1;
+				if (keys[SDL_SCANCODE_DOWN])
+					valueDiff -= 1;
+				if (keys[SDL_SCANCODE_0]) // cloud layer count
+				{
+					fancyClouds = std::max(fancyClouds + valueDiff, 0);
+					if (fancyClouds == 0)
+						puts("Cloud layers: Disabled");
+					else
+						printf("Cloud layers: %d layers\n", fancyClouds);
+				}
+				if (keys[SDL_SCANCODE_1]) // cloud layer dist
+				{
+					cloudLayerDist = cloudLayerDist + valueDiff;
+					printf("Cloud layer distance: %f\n", cloudLayerDist);
+				}
+				if (keys[SDL_SCANCODE_2]) // ground height
+				{
+					groundRadius = groundRadius + valueDiff;
+					printf("Ground height: %f\n", groundRadius);
+				}
+				if (keys[SDL_SCANCODE_3]) // cloud speed
+				{
+					cloudSpeed = cloudSpeed + valueDiff * 0.1f;
+					printf("Cloud speed: %f\n", cloudSpeed);
+				}
 			}
 		}
 
@@ -157,13 +185,14 @@ int main()
 			GLH::clear(0.f, 0.f, 0.f, 0.f);
 			GLH::useShader(cloudShader);
 			for (int i = fancyClouds - 1; i >= 0; --i)
-				triCount += GLH::drawCloudBall(player.rot, 200.f, 225.f + 15.f * i, fov, ticks / (30.f + 20.f * i));
+				triCount += GLH::drawCloudBall(player.rot, groundRadius,
+					cloudRadius + cloudLayerDist * i, fov, ticks * cloudSpeed / (30.f + 20.f * i));
 
 			GLH::useRenderBuffer(GLH::screenBuf);
 			triCount += GLH::drawRenderBuffer(quarterResBuf);
 
 			GLH::useShader(skyboxShader);
-			triCount + GLH::drawSkybox(player.rot, fov, skyboxTerrain);
+			triCount += GLH::drawSkybox(player.rot, fov, skyboxTerrain);
 		}
 
 		GLH::useShader(shader);
@@ -190,7 +219,7 @@ int main()
 			lastFPSTime = nowTime;
 			
 			std::string triCountFmt = std::to_string(triCount);
-			for (int i = triCountFmt.size() - 3; i > 0; i -= 3)
+			for (int i = (int)triCountFmt.size() - 3; i > 0; i -= 3)
 				triCountFmt.insert(i, 1, ',');
 
 			Uint64 renderMS = SDL_NS_TO_MS((renderTimeEnd - renderTimeStart) * 10);
@@ -235,14 +264,21 @@ int main()
 
 std::string getDir()
 {
-#ifdef _WIN32
-	char dir[MAX_PATH];
-	GetModuleFileNameA(NULL, dir, MAX_PATH);
-	return std::filesystem::path(dir).parent_path().parent_path().parent_path().string();
-#else
-	char dir[PATH_MAX + 1];
-	size_t count = readlink("/proc/self/exe", dir, PATH_MAX);
-	dir[count] = '\0';
-	return std::filesystem::path(dir).parent_path().parent_path().string();
-#endif
+	std::filesystem::path dir = std::filesystem::current_path();
+	while (true)
+	{
+		for (auto const& entry : std::filesystem::directory_iterator(dir))
+		{
+			if (entry.is_directory())
+				if (entry.path().filename().string() == "res")
+					return dir.string();
+		}
+		if (dir.string() != dir.parent_path().string())
+			dir = dir.parent_path();
+		else
+		{
+			puts("Unable to find res folder");
+			return "";
+		}
+	}
 }
