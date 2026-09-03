@@ -142,6 +142,14 @@ int main()
 				playerController(player, lookSpeed, fov, window);
 				player.updatePhysics(1.1f);
 
+				GLH::Vec3f sunPos(0.f, sinf(ticks / 100.f), cosf(ticks / 100.f));
+				GLH::Light light;
+				light.rgb = GLH::Vec3f(0.8f, 0.7f, 0.7f);
+				light.norm = (sunPos).normalize();
+				light.spread = 1.f / 0.1f;
+				light.type = 2.f;
+				GLH::setLight(light, 0);
+
 				int valueDiff = 0;
 				if (keys[SDL_SCANCODE_UP])
 					valueDiff += 1;
