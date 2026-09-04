@@ -49,10 +49,8 @@ void main()
     const vec4 sunset   = vec4(1.000f, 0.500f, 0.000f, 1.f);
     const vec4 sun      = vec4(1.000f, 1.000f, 0.900f, 1.f);
 
-    vec3 sunPos = vec3(0.f, sin(time), cos(time));
-    float sunRad = 0.05f;
-    float sunDist = length(sunPos - TexCoords);
 
+    vec3 sunPos = vec3(0.f, sin(time), cos(time));
     float skystate = sunPos.y;
     vec4 color = vec4(0.f, 0.f, 0.f, 0.f);
     if (skystate >= 0.5f)
@@ -67,9 +65,12 @@ void main()
     float horizonSunDist = length((sunPos - TexCoords) * vec3(1.f, 3.f, 1.f));
     float sunsetStrength = clamp((0.3f - abs(sunPos.y)) * 3.33f, 0.f, 1.f);
     color = mix(color, mix(color, sunset, 1.f / horizonSunDist), sunsetStrength);
+    
+    float sunRad = 0.05f;
+    float sunDist = length(sunPos - TexCoords);
 
     // why is the power needed??? vvv
-    color = mix(sun, color, clamp(pow(sunRad - sunDist, 1.f), 0.f, 1.f));
+    color = mix(sun, color, pow(clamp(sunDist - sunRad, 0.f, 1.f), 0.5f));
 
 	FragColor = color;
 }
